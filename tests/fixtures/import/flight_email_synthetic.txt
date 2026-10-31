@@ -1,0 +1,11 @@
+Subject: Your trip confirmation - SFO to LIS (SYNTHETIC TEST EMAIL)
+
+Thanks for booking with TAP Air Portugal.
+Booking reference: XK7Q2P
+
+Flight TP 236
+Saturday, May 2, 2026
+Departs 6:30 PM  San Francisco (SFO)
+Arrives 2:45 PM  Lisbon (LIS)  - next day
+
+Passenger: TEST PASSENGER

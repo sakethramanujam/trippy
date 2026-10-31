@@ -1,0 +1,8 @@
+Subject: Your stay at Hotel Alfama Test is confirmed (SYNTHETIC TEST EMAIL)
+
+Reservation number: H55TEST9
+Address: Rua de Exemplo 12, 1100-001 Lisboa, Portugal
+
+Check-in: Sunday, May 3, 2026 from 3:00 PM
+Check-out: Thursday, May 7, 2026 until 11:00 AM
+Room: Deluxe double

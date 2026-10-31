@@ -1,0 +1,22 @@
+From: Airline <noreply@example.com>
+Subject: Travel Receipt for DEMO/ALEX Travel Date: 01/07/2027
+Date: Thu, 06 Jan 2027 09:00:00 -0800
+Content-Type: text/plain; charset=utf-8
+
+Passenger Agency Record Locator
+DEMO ALEX BCDTST
+[ Ticket Receipt Total Amount: 150.25 USD
+Date From/To Flight/Vendor Status
+Friday, January 7 2027 PHX-SJC Southwest Airlines 2039 Confirmed
+Electronic Ticket Number / Issue Date Invoice Number Form of Payment Ticket Amount
+0000000000000 / 06Jan22 0000000 CA*******000
+150.25 USD
+Base 155.24 USD
+Total Tax 26.24 USD
+[ Travel Summary
+Date From/To Flight/Vendor Status Depart/Arrive Class/Type Baggage Allowance
+01/07/2027 PHX-SJC WN 2039 Confirmed 10:10 AM/11:15 AM Economy/I 02P
+[ Flight Total duration
+2 h 5 min [Add to Calendar] < Not working?<
+Southwest Airlines WN2039 Airline Record Locator WNTEST
+

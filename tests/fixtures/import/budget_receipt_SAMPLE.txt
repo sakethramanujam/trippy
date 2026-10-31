@@ -1,0 +1,41 @@
+*** SAMPLE RECEIPT - FICTIONAL DATA FOR TESTING ONLY ***
+Subject: SAMPLE - Your Budget Rental Receipt
+
+Budget Rent A Car System - E-Receipt
+Thanks for renting with Budget!
+
+Rental Agreement #: 900000002
+Confirmation #: 00SAMPLE2US2
+Budget Fastbreak #: SAMPLE-BG2
+
+Pick-up Location: Seattle-Tacoma Intl Airport (SEA)
+Sample Rental Car Facility, 3 Example Ave
+SeaTac, WA 98158
+Pick-up Date/Time: 06/18/2025 at 2:05 PM
+
+Return Location: Seattle-Tacoma Intl Airport (SEA)
+Sample Rental Car Facility, 3 Example Ave
+SeaTac, WA 98158
+Return Date/Time: 06/23/2025 at 9:40 AM
+
+Vehicle: 2024 FORD ESCAPE SE AWD
+Car Class: Intermediate SUV
+Plate #: SMPL002 WA
+Odometer Out: 30,112
+Odometer In: 30,508
+Fuel Out: 4/4
+Fuel In: 3/4
+
+Charges
+Base Rate 5 Days @ $61.00/Day          $305.00
+Fuel Service Charge                     $22.50
+Airport Concession Fee Recovery         $34.36
+Customer Facility Charge                $30.00
+Vehicle License Recovery Fee             $9.75
+Rental Car Tax 11.9%                    $47.97
+Sales Tax 10.4%                         $41.92
+Total Amount Charged:                  $491.50
+
+Charged to: Mastercard XXXX-XXXX-XXXX-5454
+
+This is a sample file and is not a real Budget document.

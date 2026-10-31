@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+pydantic
+python-dotenv
+alembic
+argon2-cffi>=23.1
+PyJWT>=2.8
+icalendar>=6.0
+pypdf>=4.0
+aiosmtpd>=1.4

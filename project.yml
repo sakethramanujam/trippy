@@ -1,0 +1,112 @@
+# XcodeGen spec for building the Trippy iOS app with xcodebuild / Xcode.
+# Uses the SAME sources as Trippy.swiftpm (the Swift Playgrounds package is untouched).
+#   brew install xcodegen && xcodegen generate   # -> Trippy.xcodeproj
+name: Trippy
+options:
+  bundleIdPrefix: samalabs
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "0.0.1"
+    CURRENT_PROJECT_VERSION: "1"
+targets:
+  Trippy:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: Trippy.swiftpm/Sources/Trippy
+    info:
+      path: ios-xcode/Info.plist
+      properties:
+        CFBundleDisplayName: Trippy
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        UILaunchScreen:
+          UIColorName: ""
+        UIUserInterfaceStyle: Dark
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+        # Default Trippy server for this build, from TRIPPY_API_BASE_URL in ios-xcode/Base.xcconfig
+        # (set yours in the gitignored ios-xcode/Local.xcconfig). Empty = http://localhost:8000.
+        # People can change it in the app (sign-in screen > Server), or override it with the
+        # TRIPPY_API_BASE_URL env var in the Xcode scheme.
+        TRIPPY_API_BASE_URL: $(TRIPPY_API_BASE_URL)
+        # Plain HTTP is allowed only to local-network hosts (*.local, unqualified names, IPs).
+        # Public servers should use https (Caddy or Cloudflare Tunnel, see SELF_HOSTING.md).
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+        NSLocalNetworkUsageDescription: Trippy connects to the Trippy server you choose, which may be on your local network, to load your trips, rentals and expenses.
+        NSPhotoLibraryAddUsageDescription: Trippy saves the trip and year cards you create to your photo library.
+        ITSAppUsesNonExemptEncryption: false
+        # Background refresh keeps reminders and widgets current (see LiveStatus.swift).
+        BGTaskSchedulerPermittedIdentifiers:
+          - samalabs.trippy.refresh
+        UIBackgroundModes:
+          - fetch
+        NSSupportsLiveActivities: true
+    configFiles:
+      Debug: ios-xcode/Base.xcconfig
+      Release: ios-xcode/Base.xcconfig
+    entitlements:
+      path: ios-xcode/Trippy.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.samalabs.trippy
+    dependencies:
+      - target: TrippyWidgets
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: samalabs.trippy
+        PRODUCT_NAME: Trippy
+        TARGETED_DEVICE_FAMILY: "1"
+        GENERATE_INFOPLIST_FILE: NO
+        ENABLE_PREVIEWS: YES
+        # Signing: DEVELOPMENT_TEAM comes from ios-xcode/Local.xcconfig (gitignored), or pick
+        # the team in Xcode > Signing & Capabilities. The only capability is an App Group
+        # shared with the widgets.
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_IDENTITY: "Apple Development"
+        "CODE_SIGN_IDENTITY[sdk=iphonesimulator*]": "-"
+        # Assets.xcassets only holds brand logos (no app icon set yet).
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    scheme:
+      gatherCoverageData: false
+  TrippyWidgets:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: ios-xcode/TrippyWidgets
+      - path: Trippy.swiftpm/Sources/Trippy/Shared
+    info:
+      path: ios-xcode/TrippyWidgets/Info.plist
+      properties:
+        CFBundleDisplayName: Trippy
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    configFiles:
+      Debug: ios-xcode/Base.xcconfig
+      Release: ios-xcode/Base.xcconfig
+    entitlements:
+      path: ios-xcode/TrippyWidgets/TrippyWidgets.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.samalabs.trippy
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: samalabs.trippy.widgets
+        PRODUCT_NAME: TrippyWidgets
+        TARGETED_DEVICE_FAMILY: "1"
+        GENERATE_INFOPLIST_FILE: NO
+        SKIP_INSTALL: YES
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_IDENTITY: "Apple Development"
+        "CODE_SIGN_IDENTITY[sdk=iphonesimulator*]": "-"

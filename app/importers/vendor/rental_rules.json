@@ -1,0 +1,1698 @@
+{
+ "_comment": "Shared receipt-parsing rules. Used verbatim by js/parsers/engine.js (browser + Node tests) and tools/import_receipts.py. Regexes must stay in the JS/Python common subset: numbered groups only, no inline flags, no \\Z/\\A, use [\\s\\S] instead of dot-all. All patterns are compiled case-insensitive + multiline.",
+ "version": 1,
+ "detectIgnore": [
+  "Avis[ \\t]+Budget[ \\t]+(?:Group|Car[ \\t]+Rental|Rental)",
+  "Enterprise[ \\t]+Holdings",
+  "Enterprise[ \\t]+Mobility"
+ ],
+ "companies": {
+  "avis": {
+   "name": "Avis",
+   "detect": [
+    {
+     "re": "\\bAvis\\b",
+     "w": 1
+    },
+    {
+     "re": "avis\\.com",
+     "w": 2
+    },
+    {
+     "re": "Avis[ \\t]+Preferred",
+     "w": 3
+    }
+   ],
+   "fields": {
+    "loyalty.number": [
+     {
+      "re": "Avis[ \\t]+Preferred(?:[ \\t]+Plus)?[ \\t]*(?:Number|No\\.?|#)?[ \\t]*(?:[:#]|\\t)[ \\t]*([A-Z0-9][A-Z0-9-]{3,})",
+      "set": {
+       "loyalty.program": "Avis Preferred"
+      }
+     }
+    ],
+    "confirmation": [
+     "\\bAvis[ \\t]+Confirmation[ \\t]+Number[ \\t]*:[ \\t]*([A-Z0-9]{6,})\\b"
+    ],
+    "vehicle.description": [
+     {
+      "re": "\\bYour[ \\t]+(White|Black|Silver|Gray|Grey|Blue|Red|Green|Brown|Beige|Gold|Orange|Yellow|Purple|Maroon|Tan)?[ \\t]*([A-Z][A-Z0-9-]*(?:[ \\t]+[A-Z0-9-]+)*)[ \\t]+is[ \\t]+ready\\b",
+      "groups": {
+       "vehicle.color": 1,
+       "vehicle.description": 2
+      }
+     }
+    ],
+    "vehicle.plate": [
+     "License[ \\t]+plate[ \\t]*#[ \\t]*([A-Z0-9]{2,8})\\b"
+    ],
+    "vehicle.class": [
+     "^[ \\t]*(?:YOUR[ \\t]+CAR|Vehicle)[ \\t]*\\n(?:[ \\t]*\\n)*[ \\t]*([^\\n]+?[ \\t]+or[ \\t]+similar)[ \\t]*$",
+     "^[ \\t]*Vehicle[ \\t]*\\n[ \\t]*([^\\n]+?[ \\t]+or[ \\t]+similar)[ \\t]*$",
+     "^[ \\t]*Avis[ \\t]+-[ \\t]+([^\\n]+?)[ \\t]*$"
+    ],
+    "pickup.location": [
+     "^[ \\t]*Welcome[ \\t]+to[ \\t]+([A-Z][^\\n.]{2,60}?)\\.[ \\t]*$"
+    ],
+    "pickup.datetime": [
+     "^[ \\t]*PICK[ \\t]+UP[ \\t]*\\n(?:[ \\t]*\\n)*[ \\t]*([^\\n]*\\d{4}[^\\n]*)$"
+    ],
+    "return.datetime": [
+     "^[ \\t]*DROP[ \\t]+OFF[ \\t]*\\n(?:[ \\t]*\\n)*[ \\t]*([^\\n]*\\d{4}[^\\n]*)$"
+    ]
+   },
+   "blocks": {
+    "pickup": {
+     "start": [
+      "^[ \\t]*(?:pick-?up(?:[ \\t]+(?:location|information|info|details|branch|office))?|pick[ \\t]+up[ \\t]+location)[ \\t]*:?[ \\t]*$"
+     ],
+     "end": [
+      "^[ \\t]*(?:return(?:ed)?|drop[- ]?off)(?:[ \\t]+(?:location|information|info|details|branch|office))?[ \\t]*(?::|$)",
+      "^[ \\t]*drop[- ]?off[ \\t]+location[ \\t]*$",
+      "^[ \\t]*drop-off:[ \\t]*$",
+      "^[ \\t]*(?:(?:return(?:ed)?|drop-?off)(?:[ \\t]+(?:location|information|info|details|branch|office))?|drop[ \\t]+off[ \\t]+location)[ \\t]*:?[ \\t]*$"
+     ]
+    },
+    "return": {
+     "start": [
+      "^[ \\t]*(?:(?:return(?:ed)?|drop-?off)(?:[ \\t]+(?:location|information|info|details|branch|office))?|drop[ \\t]+off[ \\t]+location)[ \\t]*:?[ \\t]*$"
+     ],
+     "end": [
+      "^[ \\t]*(?:vehicle|your[ \\t]+vehicle|car|charges|your[ \\t]+charges|rental[ \\t]+charges|summary)\\b",
+      "^[ \\t]*(?:view|update|a[ \\t]+smooth|estimated)\\b",
+      "^[ \\t]*duration:"
+     ]
+    }
+   }
+  },
+  "budget": {
+   "name": "Budget",
+   "detect": [
+    {
+     "re": "\\bBudget\\b",
+     "w": 1
+    },
+    {
+     "re": "budget\\.com",
+     "w": 2
+    },
+    {
+     "re": "Fastbreak",
+     "w": 3
+    }
+   ],
+   "fields": {
+    "loyalty.number": [
+     {
+      "re": "(?:Budget[ \\t]+)?Fastbreak[ \\t]*(?:Number|No\\.?|#)?[ \\t]*(?:[:#]|\\t)[ \\t]*([A-Z0-9][A-Z0-9-]{3,})",
+      "set": {
+       "loyalty.program": "Budget Fastbreak"
+      }
+     }
+    ]
+   }
+  },
+  "enterprise": {
+   "name": "Enterprise",
+   "detect": [
+    {
+     "re": "\\bEnterprise\\b",
+     "w": 1
+    },
+    {
+     "re": "enterprise\\.com",
+     "w": 2
+    },
+    {
+     "re": "Enterprise[ \\t]+Plus",
+     "w": 3
+    },
+    {
+     "re": "Rent-A-Car",
+     "w": 1
+    }
+   ],
+   "fields": {
+    "loyalty.number": [
+     {
+      "re": "Enterprise[ \\t]+Plus[ \\t]*(?:Number|No\\.?|#)?[ \\t]*(?:[:#]|\\t)[ \\t]*([A-Z0-9][A-Z0-9-]{3,})",
+      "set": {
+       "loyalty.program": "Enterprise Plus"
+      }
+     }
+    ],
+    "agreement": [
+     "\\bRA[ \\t]*#[ \\t]*:?[ \\t]*([A-Z0-9]{6,10})\\b",
+     "^[ \\t]*Rental[ \\t]+Agreement[ \\t]*#[ \\t]*([A-Z0-9]{6,10})\\b",
+     "\\bEnterprise[ \\t]+Rental[ \\t]+Agreement[ \\t]+([A-Z0-9]{6,10})\\b"
+    ],
+    "total": [
+     "Amount[ \\t]+charged[ \\t]+on[^\\n]*?\\([ \\t]*\\$[ \\t]*([\\d,]+\\.\\d{2})[ \\t]*\\)",
+     "^[ \\t]*Total[ \\t]{2,}\\$[ \\t]*([\\d,]+\\.\\d{2})[ \\t]*$"
+    ],
+    "payment.cardBrand": [
+     {
+      "re": "charged[ \\t]+on[^\\n]*?[ \\t]to[ \\t]+(VISA|MASTERCARD|MASTER[ \\t]CARD|AMEX|AMERICAN[ \\t]+EXPRESS|DISCOVER)[ \\t]*\\((\\d{4})\\)",
+      "groups": {
+       "payment.cardBrand": 1,
+       "payment.cardLast4": 2
+      }
+     }
+    ],
+    "mileage.out": [
+     "Starting:[ \\t]*(\\d{1,7})[ \\t]+Ending:",
+     "\\bODO:[ \\t]*(\\d{1,7})\\b",
+     "^[ \\t]*Mileage:[ \\t]*(\\d{1,7})[ \\t]*$"
+    ],
+    "mileage.in": [
+     "Starting:[ \\t]*\\d{1,7}[ \\t]+Ending:[ \\t]*(\\d{1,7})\\b"
+    ],
+    "fuel.out": [
+     "Starting:[ \\t]*(\\d+(?:\\.\\d+)?[ \\t]?g)[ \\t]+Ending:",
+     "\\bFuel:[ \\t]*(\\d+(?:\\.\\d+)?[ \\t]?g)\\b"
+    ],
+    "fuel.in": [
+     "Starting:[ \\t]*\\d+(?:\\.\\d+)?[ \\t]?g[ \\t]+Ending:[ \\t]*(\\d+(?:\\.\\d+)?[ \\t]?g)"
+    ],
+    "vehicle.plate": [
+     {
+      "re": "\\bLicense:[ \\t]*([A-Z]{2})[ \\t]+([A-Z0-9]{2,8})\\b",
+      "groups": {
+       "vehicle.plateState": 1,
+       "vehicle.plate": 2
+      }
+     },
+     "^[ \\t]*License[ \\t]*#[ \\t]*:[ \\t]*([A-Z0-9]{2,8})\\b"
+    ],
+    "vehicle.plateState": [
+     "^[ \\t]*State/Province:[ \\t]*([A-Z]{2})\\b"
+    ],
+    "vehicle.description": [
+     "^[ \\t]*Make[ \\t]*/[ \\t]*Model[ \\t]*:[ \\t]*([A-Z0-9]+[ \\t]*/[ \\t]*[A-Z0-9]+)[ \\t]*$",
+     "^[ \\t]*((?:19|20)\\d{2}[ \\t]+[A-Z]{2,5}[ \\t]+[A-Z0-9]{2,5})[ \\t]",
+     "Vehicle[ \\t]+Information[ \\t]*\\n(?:[^\\n]*\\n){0,4}?([A-Z0-9]{2,5})(?:[ \\t]{2,}[^\\n]*)?$"
+    ],
+    "vehicle.class": [
+     "^[ \\t]*Vehicle[ \\t]+Class(?:[ \\t]+Driven)?[ \\t]*\\n(?:[ \\t]*\\n)*[ \\t]*([A-Za-z][A-Za-z ]*?(?:[ \\t]\\d[ \\t]*door|SUV)[^\\n]*?)(?:[ \\t]{2,}[^\\n]*)?$"
+    ]
+   },
+   "preprocess": [
+    {
+     "re": "^[ \\t]*Dates[ \\t]*&[ \\t]*Times[^\\n]*\\n([^\\t\\n]+\\d{4}[ \\t]+\\d{1,2}:\\d{2}[ \\t]*[AP]M)\\t+([^\\n]+)\\n",
+     "to": "Pick-up:\n$1\n$2\n"
+    },
+    {
+     "re": "^(\\(\\d{3}\\)[ \\t]*\\d{3}-\\d{4})[ \\t]*\\n([^\\t\\n]+\\d{4}[ \\t]+\\d{1,2}:\\d{2}[ \\t]*[AP]M)\\t+([^\\n]+)\\n",
+     "to": "$1\n\nReturn:\n$2\n$3\n"
+    },
+    {
+     "re": "\\n(?:[ \\t]*\\n)*[ \\t]*(?:Phone|Hours)[ \\t]*\\n(?:[ \\t]*\\n)*[^\\n]*",
+     "to": ""
+    },
+    {
+     "re": "\\n(?:[ \\t]*\\n)*[ \\t]*(?:Location|Date[ \\t]*&[ \\t]*Time|Address)[ \\t]*\\n(?:[ \\t]*\\n)*",
+     "to": "\n"
+    }
+   ],
+   "columns": [
+    {
+     "header": "\\bPickup[ \\t]{2,}(?:Intended[ \\t]+)?Return[ \\t]*$",
+     "cols": [
+      {
+       "name": "Pick-up",
+       "at": "\\bPickup\\b"
+      },
+      {
+       "name": "Return",
+       "at": "(?:Intended[ \\t]+)?Return[ \\t]*$",
+       "after": "^Actual[ \\t]+Return[ \\t]*$"
+      }
+     ],
+     "take": 20
+    }
+   ]
+  },
+  "national": {
+   "name": "National",
+   "family": "enterprise",
+   "detect": [
+    {
+     "re": "National[ \\t]+Car[ \\t]+Rental",
+     "w": 3
+    },
+    {
+     "re": "Emerald[ \\t]+Club",
+     "w": 3
+    },
+    {
+     "re": "nationalcar\\.com",
+     "w": 2
+    }
+   ],
+   "fields": {
+    "loyalty.number": [
+     {
+      "re": "Emerald[ \\t]+Club[ \\t]*(?:Number|No\\.?|#)?[ \\t]*(?:[:#]|\\t)[ \\t]*([A-Z0-9][A-Z0-9-]{3,})",
+      "set": {
+       "loyalty.program": "Emerald Club"
+      }
+     }
+    ]
+   }
+  },
+  "alamo": {
+   "name": "Alamo",
+   "family": "enterprise",
+   "detect": [
+    {
+     "re": "\\bAlamo\\b",
+     "w": 2
+    },
+    {
+     "re": "Alamo[ \\t]+Insiders",
+     "w": 3
+    },
+    {
+     "re": "alamo\\.com",
+     "w": 2
+    }
+   ],
+   "fields": {
+    "loyalty.number": [
+     {
+      "re": "Alamo[ \\t]+Insiders?[ \\t]*(?:Number|No\\.?|#)?[ \\t]*(?:[:#]|\\t)[ \\t]*([A-Z0-9][A-Z0-9-]{3,})",
+      "set": {
+       "loyalty.program": "Alamo Insiders"
+      }
+     }
+    ]
+   }
+  },
+  "hertz": {
+   "name": "Hertz",
+   "detect": [
+    {
+     "re": "\\bHertz\\b",
+     "w": 1
+    },
+    {
+     "re": "hertz\\.com",
+     "w": 2
+    },
+    {
+     "re": "Gold[ \\t]+Plus[ \\t]+Rewards",
+     "w": 3
+    },
+    {
+     "re": "Rental[ \\t]+Record",
+     "w": 2
+    }
+   ],
+   "fields": {
+    "loyalty.number": [
+     {
+      "re": "Gold[ \\t]+Plus[ \\t]+Rewards[ \\t]*(?:Number|No\\.?|#)?[ \\t]*(?:[:#]|\\t)[ \\t]*([A-Z0-9][A-Z0-9-]{3,})",
+      "set": {
+       "loyalty.program": "Hertz Gold Plus Rewards"
+      }
+     }
+    ],
+    "agreement": [
+     "^[ \\t]*#[ \\t]+\\d+[ \\t]+RN[ \\t]+[A-Z]{2}[ \\t]+(\\d{6,})\\b",
+     "Rental[ \\t]+Record[ \\t]*#[ \\t]*(\\d{6,})\\b"
+    ],
+    "confirmation": [
+     "^[ \\t]*RES[ \\t]+([A-Z0-9]{6,})\\b",
+     "Confirmation[ \\t]+Number[ \\t]*:[ \\t]*\\n?[ \\t]*([A-Z0-9]{6,})\\b"
+    ],
+    "vehicle.description": [
+     {
+      "re": "^[ \\t]*VEHICLE:[ \\t]*\\d+/\\d+[ \\t]+(\\d{2})[ \\t]+(?:[A-Z]{2,4}[ \\t]+)?([A-Z][A-Z0-9-]*)",
+      "groups": {
+       "vehicle.year": 1,
+       "vehicle.description": 2
+      }
+     },
+     "^[ \\t]*Vehicle:[ \\t]*((?:19|20)\\d{2}[ \\t]+[A-Z][A-Z0-9 -]*?)[ \\t]*$"
+    ],
+    "vehicle.plate": [
+     {
+      "re": "^[ \\t]*LICENSE:[ \\t]*([A-Z]{2})[ \\t]+([A-Z0-9]{2,8})[ \\t]*$",
+      "groups": {
+       "vehicle.plateState": 1,
+       "vehicle.plate": 2
+      }
+     }
+    ],
+    "vehicle.classCode": [
+     "^[ \\t]*(?:RATE[ \\t]+)?CLASS:[ \\t]*([A-Z])[ \\t]*$"
+    ],
+    "vehicle.class": [
+     "^[ \\t]*Reserved[ \\t]+Class:[ \\t]*([^\\n]+?)[ \\t]*$"
+    ],
+    "pickup.location": [
+     "^[ \\t]*(?:RENTED|Rental[ \\t]+Location):[ \\t]*([^\\n]+?)[ \\t]*$",
+     "^[ \\t]*Welcome[ \\t]+to[ \\t]+(Hertz[ \\t]+[A-Z][A-Za-z .'-]+?),[ \\t]+where\\b"
+    ],
+    "return.location": [
+     "^[ \\t]*(?:RETURNED|Return[ \\t]+Location):[ \\t]*([^\\n]+?)[ \\t]*$"
+    ],
+    "pickup.datetime": [
+     "^[ \\t]*(?:RENTAL|Rental[ \\t]+Time):[ \\t]*([^\\n]+?)[ \\t]*$"
+    ],
+    "return.datetime": [
+     "^[ \\t]*(?:RETURN|Return[ \\t]+Time):[ \\t]*([^\\n]+?)[ \\t]*$"
+    ],
+    "fuel.out": [
+     "^[ \\t]*FUEL:[ \\t]*(\\d+%)[ \\t]*OUT\\b"
+    ],
+    "fuel.in": [
+     "^[ \\t]*FUEL:[ \\t]*\\d+%[ \\t]*OUT[ \\t]+(\\d+%)[ \\t]*IN\\b"
+    ],
+    "days": [
+     "@[ \\t]*(\\d{1,3})[ \\t]*/[ \\t]*DAYS\\b",
+     "^[ \\t]*Rental[ \\t]+Rate\\*?[ \\t]+(\\d{1,3})[ \\t]+@"
+    ],
+    "total": [
+     "^[ \\t]*TOTAL[ \\t]+AMOUNT[ \\t]+DUE[ \\t]*\\$[ \\t]*([\\d,]*\\.\\d{2})"
+    ],
+    "payment.cardBrand": [
+     {
+      "re": "^[ \\t]*CHARGED[ \\t]+ON[ \\t]+([A-Z]{2,10})[ \\t]+X+(\\d{4})\\b",
+      "groups": {
+       "payment.cardBrand": 1,
+       "payment.cardLast4": 2
+      }
+     }
+    ]
+   }
+  }
+ },
+ "generic": {
+  "fields": {
+   "agreement": [
+    "(?:Rental[ \\t]+Agreement|Rental[ \\t]+Record|Agreement)[ \\t]*(?:Number|No\\.?|#)?[ \\t]*[:#]?[ \\t]*((?=[A-Z-]*\\d)[A-Z0-9][A-Z0-9-]{5,})\\b"
+   ],
+   "confirmation": [
+    "confirmation[ \\t]+number[ \\t]+is[ \\t]+([A-Z0-9]{6,})\\b",
+    "(?:Confirmation|Reservation|Conf\\.)[ \\t]*(?:Number|No\\.?|Code|#)?[ \\t]*[:#]?[ \\t]*((?=[A-Z-]*\\d)[A-Z0-9][A-Z0-9-]{4,})\\b"
+   ],
+   "vehicle.description": [
+    "^[ \\t]*(?:Vehicle(?![ \\t]*#)(?:[ \\t]+(?:Description|Make/Model|Model))?|Your[ \\t]+Vehicle|Car(?:[ \\t]+Model)?|Make[ \\t]*/[ \\t]*Model)[ \\t]*(?:[:#]|\\t)[ \\t]*([^\\n]{3,}?)[ \\t]*$"
+   ],
+   "vehicle.class": [
+    "^[ \\t]*(?:Car[ \\t]+(?:Class|Group)|Vehicle[ \\t]+(?:Class|Group|Type)|Class|Group|Category)[ \\t]*(?:[:#]|\\t)[ \\t]*([^\\n]+?)[ \\t]*$"
+   ],
+   "vehicle.plate": [
+    {
+     "re": "^[ \\t]*(?:License(?:[ \\t]+Plate)?|Plate|Lic\\.?[ \\t]*Plate)[ \\t]*(?:#|No\\.?)?[ \\t]*(?:[:#]|\\t)[ \\t]*([A-Z0-9][A-Z0-9-]{1,10}(?:[ \\t][A-Z0-9]{1,4}(?=[ \\t]+[A-Z]{2}[ \\t]*$))?)(?:[ \\t]+([A-Z]{2}))?[ \\t]*$",
+     "groups": {
+      "vehicle.plate": 1,
+      "vehicle.plateState": 2
+     }
+    }
+   ],
+   "mileage.out": [
+    "^[ \\t]*(?:Mileage|Odometer|Miles|Odo\\.?)[ \\t]+(?:Out|Start|Begin(?:ning)?|at[ \\t]+Pick[- ]?up)[ \\t]*(?:[:#]|\\t)?[ \\t]*([\\d,]{1,9})\\b"
+   ],
+   "mileage.in": [
+    "^[ \\t]*(?:Mileage|Odometer|Miles|Odo\\.?)[ \\t]+(?:In|End(?:ing)?|Return|at[ \\t]+Return)[ \\t]*(?:[:#]|\\t)?[ \\t]*([\\d,]{1,9})\\b"
+   ],
+   "mileage.driven": [
+    "^[ \\t]*(?:Miles|Mileage|Total[ \\t]+Miles)[ \\t]+(?:Driven|Used|Traveled|Travelled)[ \\t]*(?:[:#]|\\t)?[ \\t]*([\\d,]{1,7})\\b"
+   ],
+   "fuel.out": [
+    "^[ \\t]*(?:Fuel|Gas)(?:[ \\t]+Level)?[ \\t]+(?:Out|Start|at[ \\t]+Pick[- ]?up)[ \\t]*(?:[:#]|\\t)?[ \\t]*([^\\n]{1,14}?)[ \\t]*$"
+   ],
+   "fuel.in": [
+    "^[ \\t]*(?:Fuel|Gas)(?:[ \\t]+Level)?[ \\t]+(?:In|End|at[ \\t]+Return)[ \\t]*(?:[:#]|\\t)?[ \\t]*([^\\n]{1,14}?)[ \\t]*$"
+   ],
+   "days": [
+    "(\\d{1,3})[ \\t]*(?:Days?|Day\\(s\\))[ \\t]*@[ \\t]*\\$?[ \\t]*[\\d,]+\\.\\d{2}",
+    "^[ \\t]*(?:Rental[ \\t]+)?(?:Days|Length[ \\t]+of[ \\t]+Rental)[ \\t]*(?:[:#]|\\t)[ \\t]*(\\d{1,3})\\b"
+   ],
+   "dailyRate": [
+    "\\d{1,3}[ \\t]*(?:Days?|Day\\(s\\))[ \\t]*@[ \\t]*\\$?[ \\t]*([\\d,]+\\.\\d{2})",
+    "\\$[ \\t]*([\\d,]+\\.\\d{2})[ \\t]*(?:/|per)[ \\t]*day\\b"
+   ],
+   "weeklyRate": [
+    "\\d{1,2}[ \\t]*(?:Weeks?|Wk\\(s\\)|Week\\(s\\))[ \\t]*@[ \\t]*\\$?[ \\t]*([\\d,]+\\.\\d{2})",
+    "\\$[ \\t]*([\\d,]+\\.\\d{2})[ \\t]*(?:/|per)[ \\t]*week\\b"
+   ],
+   "weeks": [
+    "(\\d{1,2})[ \\t]*(?:Weeks?|Wk\\(s\\)|Week\\(s\\))[ \\t]*@"
+   ],
+   "total": [
+    "^[ \\t]*TOTAL[ \\t]+CHARGES[ \\t]*\\n(?:[ \\t]*\\n)*[ \\t]*\\$[ \\t]*([\\d,]+\\.\\d{2})[ \\t]*$",
+    "^[ \\t]*Breakdown[ \\t]+Total[ \\t]*:[ \\t]*\\$[ \\t]*([\\d,]+\\.\\d{2})",
+    "^[ \\t]*(?:Total[ \\t]+(?:Charges|Charged|Paid|Amount(?:[ \\t]+(?:Charged|Paid|Due))?)|Amount[ \\t]+(?:Charged|Paid|Due)|Grand[ \\t]+Total|Estimated[ \\t]+Total|Total(?![ \\t]*(?:tax|fee|surcharge|discount|savings|miles|days|time)))\\b[^\\n\\d$]*?(?:USD|US\\$)?[ \\t]*\\$?[ \\t]*([\\d,]+\\.\\d{2})"
+   ],
+   "payment.cardBrand": [
+    {
+     "re": "\\b(Visa|Master[ \\t]?Card|MC|AMEX|American[ \\t]+Express|Discover|Diners(?:[ \\t]+Club)?)\\b[^\\n\\d]{0,25}?(\\d{4})\\b",
+     "groups": {
+      "payment.cardBrand": 1,
+      "payment.cardLast4": 2
+     }
+    }
+   ],
+   "payment.cardLast4": [
+    "(?:card|payment|charged[ \\t]+to|paid[ \\t]+with)[^\\n\\d]{0,30}?(?:ending(?:[ \\t]+in)?|x{2,}|\\*{2,}|#)[^\\n\\d]{0,12}(\\d{4})\\b"
+   ],
+   "loyalty.number": [
+    "(?:Loyalty|Member(?:ship)?|Rewards)[ \\t]*(?:Number|No\\.?|ID|#)?[ \\t]*(?:[:#]|\\t)[ \\t]*([A-Z0-9][A-Z0-9-]{4,})"
+   ],
+   "currency": [
+    "\\b(USD|CAD|EUR|GBP|AUD|MXN|NZD)\\b"
+   ],
+   "vehicle.color": [
+    "^[ \\t]*(?:Colou?r)[ \\t]*:[ \\t]*([A-Za-z][A-Za-z ]{2,20}?)[ \\t]*$"
+   ]
+  },
+  "blocks": {
+   "pickup": {
+    "start": [
+     "^[ \\t]*(?:pick[- ]?up|picked[ \\t]+up|rental|renting|start)(?:[ \\t]+(?:location|information|info|details|branch|office))?[ \\t]*(?::|$)"
+    ],
+    "end": [
+     "^[ \\t]*(?:return(?:ed)?|drop[- ]?off)(?:[ \\t]+(?:location|information|info|details|branch|office))?[ \\t]*(?::|$)"
+    ]
+   },
+   "return": {
+    "start": [
+     "^[ \\t]*(?:return(?:ed)?|drop[- ]?off)(?:[ \\t]+(?:location|information|info|details|branch|office))?[ \\t]*(?::|$)"
+    ],
+    "end": [
+     "^[ \\t]*(?:vehicle|your[ \\t]+vehicle|car|charges|your[ \\t]+charges|rental[ \\t]+charges|summary)\\b"
+    ]
+   }
+  },
+  "charges": {
+   "start": [
+    "^[ \\t]*(?:Your[ \\t]+)?(?:Rental[ \\t]+)?(?:Summary[ \\t]+of[ \\t]+)?(?:Charges|Estimated[ \\t]+Charges|Receipt[ \\t]+Summary|Charges[ \\t]+Summary|Payment[ \\t]+Summary|Charge[ \\t]+Details)[ \\t]*:?[ \\t]*$",
+    "^[ \\t]*TOTAL[ \\t]+CHARGES[ \\t]*$"
+   ],
+   "end": [
+    "^[ \\t]*(?:Total|Amount[ \\t]+(?:Charged|Paid|Due)|Grand[ \\t]+Total|Estimated[ \\t]+Total)\\b(?![ \\t]*(?:tax|fee|surcharge|discount))"
+   ],
+   "line": "^[ \\t]*([^\\n]+?)[ \\t:.]*(?:USD[ \\t]*)?(-?)[ \\t]*\\$?[ \\t]*(-?[\\d,]+\\.\\d{2})[ \\t]*(?:USD)?[ \\t]*$",
+   "skip": [
+    "^(?:sub[ -]?total|balance|deposit|amount)\\b",
+    "^\\$",
+    "^breakdown\\b",
+    "^net[ \\t]+charges\\b",
+    "^prepa(?:yment|id)\\b"
+   ],
+   "kinds": [
+    [
+     "discount",
+     "discount|savings|coupon|credit|promo|rebate"
+    ],
+    [
+     "tax",
+     "\\btax(?:es)?\\b|\\bvat\\b|\\bgst\\b|\\bhst\\b"
+    ],
+    [
+     "protection",
+     "waiver|\\bldw\\b|\\bcdw\\b|protection|insurance|coverage|\\bpai\\b|\\bsli\\b|\\blis\\b|roadside|\\bpep\\b"
+    ],
+    [
+     "fuel",
+     "fuel|gas(?:oline)?\\b|refuel|ev[ \\t]+charg"
+    ],
+    [
+     "fee",
+     "fee|surcharge|recovery|recoupment|charge|assessment|concession|facility|drop|toll|airport|license"
+    ],
+    [
+     "base",
+     "time[ \\t]*&[ \\t]*mileage|base|rate|vehicle|rental|day|week|month|t&m"
+    ]
+   ]
+  }
+ },
+ "dates": [
+  {
+   "re": "\\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\\.?[ \\t]+(\\d{1,2})(?:st|nd|rd|th)?,?[ \\t]+(\\d{4})\\b",
+   "roles": [
+    "mon",
+    "day",
+    "year"
+   ]
+  },
+  {
+   "re": "\\b(\\d{1,2})[ \\t-](Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\\.?[ \\t,-]+(\\d{4}|\\d{2})\\b",
+   "roles": [
+    "day",
+    "mon",
+    "year"
+   ]
+  },
+  {
+   "re": "\\b(\\d{4})-(\\d{2})-(\\d{2})\\b",
+   "roles": [
+    "year",
+    "month",
+    "day"
+   ]
+  },
+  {
+   "re": "\\b(\\d{1,2})/(\\d{1,2})/(\\d{4}|\\d{2})\\b",
+   "roles": [
+    "month",
+    "day",
+    "year"
+   ]
+  }
+ ],
+ "time": "(?:^|[^\\d:/.])(\\d{1,2}):(\\d{2})(?::\\d{2})?(?:[ \\t]*([AP])\\.?[ \\t]?M\\.?\\b)?",
+ "makes": [
+  "Alfa Romeo",
+  "Aston Martin",
+  "Land Rover",
+  "Mercedes-Benz",
+  "Mercedes Benz",
+  "Rolls-Royce",
+  "Rolls Royce",
+  "Polestar"
+ ],
+ "multiWordModels": [
+  "Mach E",
+  "Grand Cherokee",
+  "Grand Caravan",
+  "Model 3",
+  "Model Y",
+  "Model S",
+  "Model X",
+  "Santa Fe",
+  "Santa Cruz",
+  "Range Rover",
+  "Town & Country",
+  "Corolla Cross",
+  "Grand Wagoneer",
+  "Mustang Mach-E",
+  "Transit Connect",
+  "Crown Signia",
+  "Outlander Sport",
+  "Rogue Sport"
+ ],
+ "keepUpper": [
+  "AWD",
+  "4WD",
+  "FWD",
+  "RWD",
+  "SUV",
+  "SE",
+  "SEL",
+  "LE",
+  "XLE",
+  "XSE",
+  "LT",
+  "LS",
+  "LX",
+  "EX",
+  "EX-L",
+  "SV",
+  "SL",
+  "SR",
+  "SXT",
+  "GT",
+  "XL",
+  "XLT",
+  "EV",
+  "HEV",
+  "PHEV",
+  "BMW",
+  "GMC",
+  "RAM",
+  "CR-V",
+  "HR-V",
+  "RAV4",
+  "CX-5",
+  "CX-30",
+  "CX-50",
+  "GLE",
+  "GLC",
+  "VW",
+  "STX",
+  "RS",
+  "S",
+  "ST",
+  "LTZ",
+  "RT",
+  "GL",
+  "SXL",
+  "4D",
+  "2D",
+  "N-LINE"
+ ],
+ "required": [
+  "pickup.datetime",
+  "return.datetime",
+  "pickup.location",
+  "vehicle.description",
+  "total"
+ ],
+ "sampleMarker": "FICTIONAL[ \\t]+DATA[ \\t]+FOR[ \\t]+TESTING|\\bSAMPLE[ \\t]+RECEIPT\\b",
+ "preprocess": [
+  {
+   "re": "(\\d)[ \\t]*/[ \\t]*(\\d)",
+   "to": "$1/$2"
+  },
+  {
+   "re": "(\\d{1,2})[ \\t]+:[ \\t]+(\\d{2})\\b",
+   "to": "$1:$2"
+  },
+  {
+   "re": "\\$\\t+",
+   "to": "$ "
+  },
+  {
+   "re": "(\\d)[ \\t]+%",
+   "to": "$1%"
+  },
+  {
+   "re": "^([^\\n,]+,[ \\t]*[A-Z]{2}[ \\t]+\\d{5}(?:-\\d{4})?),?[ \\t]+(?:US|USA)[ \\t]*$",
+   "to": "$1"
+  }
+ ],
+ "vehicleCodes": {
+  "makes": {
+   "CHEV": "Chevrolet",
+   "NISN": "Nissan",
+   "TOYO": "Toyota",
+   "JEEP": "Jeep",
+   "BUIC": "Buick",
+   "HYUN": "Hyundai",
+   "AUDI": "Audi",
+   "KIA": "Kia",
+   "MITS": "Mitsubishi",
+   "VOLK": "Volkswagen",
+   "INFI": "Infiniti",
+   "FORD": "Ford",
+   "HOND": "Honda",
+   "DODG": "Dodge",
+   "CHRY": "Chrysler",
+   "SUBA": "Subaru",
+   "MAZD": "Mazda",
+   "TESL": "Tesla",
+   "GMC": "GMC"
+  },
+  "models": {
+   "MALI": "Malibu",
+   "SPAR": "Spark",
+   "EQUI": "Equinox",
+   "ACNT": "Accent",
+   "ELAN": "Elantra",
+   "KONA": "Kona",
+   "COMP": "Compass",
+   "K5": "K5",
+   "OSPT": "Outlander Sport",
+   "KICK": "Kicks",
+   "RSPT": "Rogue Sport",
+   "SENT": "Sentra",
+   "VERS": "Versa",
+   "CAMR": "Camry",
+   "CORO": "Corolla",
+   "JETT": "Jetta",
+   "ENCO": "Encore",
+   "Q3": "Q3",
+   "Q50": "Q50",
+   "ALTI": "Altima"
+  },
+  "modelMakes": {
+   "Malibu": "Chevrolet",
+   "Spark": "Chevrolet",
+   "Equinox": "Chevrolet",
+   "Accent": "Hyundai",
+   "Elantra": "Hyundai",
+   "Kona": "Hyundai",
+   "Compass": "Jeep",
+   "K5": "Kia",
+   "Outlander Sport": "Mitsubishi",
+   "Kicks": "Nissan",
+   "Rogue Sport": "Nissan",
+   "Sentra": "Nissan",
+   "Versa": "Nissan",
+   "Altima": "Nissan",
+   "Camry": "Toyota",
+   "Corolla": "Toyota",
+   "Jetta": "Volkswagen",
+   "Encore": "Buick",
+   "Q3": "Audi",
+   "Q50": "Infiniti",
+   "Accord": "Honda",
+   "Niro": "Kia"
+  },
+  "bodyStyles": [
+   "\\d?DR",
+   "SEDAN",
+   "4DSR",
+   "COUPE",
+   "WAGON"
+  ]
+ },
+ "vehicleJunk": [
+  "\\b(?:tax|taxes|surcharge|fee|fees|charges?|amount|renter|discount|total|auth|pct)\\b",
+  "\\$",
+  "^ons$",
+  "^\\d+/\\d+",
+  "%"
+ ],
+ "templates": [
+  {
+   "id": "avis-ereceipt-2026",
+   "company": "avis",
+   "collapseBlank": true,
+   "match": [
+    "\\bAvis\\b",
+    "Breakdown\\s+Total:\\s*\\$"
+   ],
+   "ops": [
+    {
+     "re": "Rental Agreement\\s*#?\\s*(\\d{9})",
+     "set": {
+      "agreement": 1
+     }
+    },
+    {
+     "re": "^Hi ([^,\\n]+),",
+     "set": {
+      "renter": [
+       1,
+       "upper"
+      ]
+     }
+    },
+    {
+     "re": "(?:^|Subject:[ \\t]*)([A-Z][A-Z .]+), THANK YOU FOR RENTING",
+     "cs": true,
+     "set": {
+      "renter": 1
+     }
+    },
+    {
+     "re": "Breakdown\\s+Total:\\s*\\$([\\d,]+\\.\\d\\d)",
+     "set": {
+      "total": [
+       1,
+       "money"
+      ]
+     }
+    },
+    {
+     "charges": "lines",
+     "re": "^(Base Rate|Taxable Products/Services\\*?|Non Taxable Products/Services|Rental Sales Tax|Prepayment|Net Charges):[ \\t]*(-?)\\$([\\d,]+\\.\\d\\d)",
+     "label": 1,
+     "neg": 2,
+     "amount": 3,
+     "skip": "^(?:Net Charges|Prepayment)$",
+     "strip": "\\*$"
+    }
+   ]
+  },
+  {
+   "id": "avis-ereceipt",
+   "company": "avis",
+   "collapseBlank": true,
+   "match": [
+    "\\bAvis\\b",
+    "^TOTAL CHARGES\\s*$"
+   ],
+   "ops": [
+    {
+     "re": "Rental Agreement\\s*#?\\s*(\\d{9})",
+     "set": {
+      "agreement": 1
+     }
+    },
+    {
+     "re": "^Hi ([^,\\n]+),",
+     "set": {
+      "renter": [
+       1,
+       "upper"
+      ]
+     }
+    },
+    {
+     "re": "(?:^|Subject:[ \\t]*)([A-Z][A-Z .]+), THANK YOU FOR RENTING",
+     "cs": true,
+     "set": {
+      "renter": 1
+     }
+    },
+    {
+     "re": "^TOTAL CHARGES[ \\t]*\\n[ \\t]*\\$ ([\\d,]+\\.\\d\\d)[ \\t]*$",
+     "set": {
+      "total": [
+       1,
+       "money"
+      ]
+     }
+    },
+    {
+     "charges": "paired",
+     "section": [
+      "^TOTAL CHARGES[ \\t]*\\n[ \\t]*\\$ [\\d,]+\\.\\d\\d[ \\t]*\\n",
+      "^Need an"
+     ],
+     "label": "^([A-Za-z][^\\n$]*?):[ \\t]*$",
+     "value": "^(-?)\\$ ([\\d,]+\\.\\d\\d)[ \\t]*$",
+     "skip": "^(?:Net Charges|Prepayment)$"
+    }
+   ]
+  },
+  {
+   "id": "hertz-carfirmation",
+   "company": "hertz",
+   "collapseBlank": true,
+   "match": [
+    "Hertz",
+    "Carfirmation"
+   ],
+   "ops": [
+    {
+     "re": "Your Confirmation Number:\\s*\\n\\s*([A-Z0-9]+)",
+     "set": {
+      "confirmation": 1
+     }
+    },
+    {
+     "re": "^Reserved Class:[ \\t]*(\\S[^\\n]*)",
+     "set": {
+      "vehicle.class": 1
+     }
+    },
+    {
+     "re": "^Hello ([^,\\n]+),",
+     "set": {
+      "renter": 1
+     }
+    },
+    {
+     "re": "Welcome to (Hertz [A-Z][a-z]+(?: [A-Z][a-z]+)*),",
+     "cs": true,
+     "set": {
+      "pickup.location": 1
+     }
+    }
+   ]
+  },
+  {
+   "id": "hertz-agreement",
+   "company": "hertz",
+   "collapseBlank": true,
+   "match": [
+    "Hertz",
+    "^Rental Record#"
+   ],
+   "ops": [
+    {
+     "re": "^Rental Record#[ \\t]*(\\d+)",
+     "set": {
+      "agreement": 1
+     }
+    },
+    {
+     "re": "^Rental Record#[^\\n]*\\n([A-Z][A-Z ]+)$",
+     "cs": true,
+     "set": {
+      "renter": 1
+     }
+    },
+    {
+     "re": "^Vehicle:[ \\t]*(\\d{4})[ \\t]+([A-Z][A-Z0-9-]*)",
+     "vehicle": {
+      "year": 1,
+      "model": 2
+     }
+    },
+    {
+     "re": "^License:[ \\t]*([A-Z]{2})[ \\t]+([A-Z0-9]+)",
+     "set": {
+      "vehicle.plateState": [
+       1,
+       "upper"
+      ],
+      "vehicle.plate": [
+       2,
+       "upper"
+      ]
+     }
+    },
+    {
+     "re": "^Miles Out:[ \\t]*(\\d+)",
+     "set": {
+      "mileage.out": [
+       1,
+       "int"
+      ]
+     }
+    },
+    {
+     "re": "^Fuel Responsibility\\s+Starting Level\\s+(\\d+)[ \\t]*%",
+     "set": {
+      "fuel.out": [
+       1,
+       "pct"
+      ]
+     }
+    },
+    {
+     "re": "^Class:[ \\t]*([A-Z])[ \\t]*$",
+     "set": {
+      "vehicle.classCode": [
+       1,
+       "upper"
+      ]
+     }
+    },
+    {
+     "re": "^Rental Location:[ \\t]*([^\\n]+)",
+     "set": {
+      "pickup.location": 1
+     }
+    },
+    {
+     "re": "^Rental Time:[ \\t]*([^\\n]+)",
+     "set": {
+      "pickup.datetime": [
+       1,
+       "dt"
+      ]
+     }
+    },
+    {
+     "re": "^Return Location:[ \\t]*([^\\n]+)",
+     "set": {
+      "return.scheduledLocation": 1
+     }
+    },
+    {
+     "re": "^Return Time:[ \\t]*([^\\n]+)",
+     "set": {
+      "return.scheduled": [
+       1,
+       "dt"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "hertz-receipt",
+   "company": "hertz",
+   "collapseBlank": true,
+   "match": [
+    "Hertz",
+    "^TOTAL AMOUNT DUE",
+    "^RENTED:"
+   ],
+   "ops": [
+    {
+     "re": "^#[ \\t]+\\d+[ \\t]+RN[ \\t]+\\w+[ \\t]+(\\d+)",
+     "set": {
+      "agreement": 1
+     }
+    },
+    {
+     "re": "^RES[ \\t]+([A-Z0-9]+)",
+     "set": {
+      "confirmation": [
+       1,
+       "upper"
+      ]
+     }
+    },
+    {
+     "re": "^RES[ \\t]+[A-Z0-9]+[ \\t]*\\n([A-Z][A-Z ]+)$",
+     "cs": true,
+     "set": {
+      "renter": 1
+     }
+    },
+    {
+     "re": "^VEHICLE:[ \\t]*\\d+[ \\t]*/[ \\t]*\\d+[ \\t]+(\\d\\d)[ \\t]+(?:[A-Z]{3}[ \\t]+)?([A-Z][A-Z0-9-]*)",
+     "cs": true,
+     "vehicle": {
+      "year": 1,
+      "model": 2
+     }
+    },
+    {
+     "re": "^LICENSE:[ \\t]*([A-Z]{2})[ \\t]+([A-Z0-9]+)",
+     "set": {
+      "vehicle.plateState": [
+       1,
+       "upper"
+      ],
+      "vehicle.plate": [
+       2,
+       "upper"
+      ]
+     }
+    },
+    {
+     "re": "^FUEL:[ \\t]*(\\d+)[ \\t]*% OUT[ \\t]+(\\d+)[ \\t]*% IN",
+     "set": {
+      "fuel.out": [
+       1,
+       "pct"
+      ],
+      "fuel.in": [
+       2,
+       "pct"
+      ]
+     }
+    },
+    {
+     "re": "^MILEAGE IN:[ \\t]*(\\d+)",
+     "set": {
+      "mileage.in": [
+       1,
+       "int"
+      ]
+     }
+    },
+    {
+     "re": "^MILEAGE OUT:[ \\t]*(\\d+)",
+     "set": {
+      "mileage.out": [
+       1,
+       "int"
+      ]
+     }
+    },
+    {
+     "re": "^MILES DRIVEN:[ \\t]*(\\d+)",
+     "set": {
+      "mileage.driven": [
+       1,
+       "int"
+      ]
+     }
+    },
+    {
+     "re": "^RATE CLASS:[ \\t]*([A-Z])[ \\t]*$",
+     "set": {
+      "vehicle.classCode": [
+       1,
+       "upper"
+      ]
+     }
+    },
+    {
+     "re": "^RENTED:[ \\t]*([^\\n]+)",
+     "set": {
+      "pickup.location": 1
+     }
+    },
+    {
+     "re": "^RETURNED:[ \\t]*([^\\n]+)",
+     "set": {
+      "return.location": 1
+     }
+    },
+    {
+     "re": "^RENTAL:[ \\t]*([^\\n]+)",
+     "set": {
+      "pickup.datetime": [
+       1,
+       "dt"
+      ]
+     }
+    },
+    {
+     "re": "^RETURN:[ \\t]*([^\\n]+)",
+     "set": {
+      "return.datetime": [
+       1,
+       "dt"
+      ]
+     }
+    },
+    {
+     "re": "^TOTAL AMOUNT DUE[ \\t]*\\$[ \\t]*([\\d,]*\\.\\d\\d)",
+     "set": {
+      "total": [
+       1,
+       "money"
+      ]
+     }
+    },
+    {
+     "re": "^CHARGED ON[ \\t]+(\\w+)[ \\t]+X+(\\d{4})",
+     "set": {
+      "payment.cardBrand": [
+       1,
+       "brand"
+      ],
+      "payment.cardLast4": 2
+     }
+    },
+    {
+     "charges": "lines",
+     "section": [
+      "^INITIAL CHARGES[ \\t]*$",
+      "^TOTAL AMOUNT DUE"
+     ],
+     "cs": true,
+     "re": "^([A-Za-z][A-Za-z &,./0-9-]*?)\\t[^\\n]*?\\$[ \\t]*([\\d,]*\\.\\d\\d)[ \\t]*$",
+     "label": 1,
+     "amount": 2,
+     "skip": "^SUBTOTAL"
+    }
+   ]
+  },
+  {
+   "id": "enterprise-receipt-html",
+   "company": "enterprise",
+   "collapseBlank": true,
+   "match": [
+    "Enterprise",
+    "^RENTAL AGREEMENT\\s+REF#"
+   ],
+   "ops": [
+    {
+     "re": "^RENTAL AGREEMENT\\s+REF#[ \\t]*\\n[ \\t]*\\d+[ \\t]+(\\w+)",
+     "set": {
+      "agreement": [
+       1,
+       "upper"
+      ]
+     }
+    },
+    {
+     "re": "^RENTER[ \\t]*\\n([A-Z][^\\n]+)$",
+     "cs": true,
+     "set": {
+      "renter": 1
+     }
+    },
+    {
+     "re": "^DATE & TIME OUT[ \\t]*\\n(\\d\\d/\\d\\d/\\d{4} \\d\\d:\\d\\d [AP]M)",
+     "set": {
+      "pickup.datetime": [
+       1,
+       "dt"
+      ]
+     }
+    },
+    {
+     "re": "^DATE & TIME IN[ \\t]*\\n(\\d\\d/\\d\\d/\\d{4} \\d\\d:\\d\\d [AP]M)",
+     "set": {
+      "return.datetime": [
+       1,
+       "dt"
+      ]
+     }
+    },
+    {
+     "re": "^VEH #\\d+ (\\d{4}) (\\w+) (\\w+)",
+     "vehicle": {
+      "year": 1,
+      "make": 2,
+      "model": 3
+     }
+    },
+    {
+     "re": "^LIC# ([A-Z0-9]+)",
+     "set": {
+      "vehicle.plate": [
+       1,
+       "upper"
+      ]
+     }
+    },
+    {
+     "re": "^MILES DRIVEN[ \\t]+([\\d,]+)",
+     "set": {
+      "mileage.driven": [
+       1,
+       "int"
+      ]
+     }
+    },
+    {
+     "re": "^Total Charges:[ \\t]*\\$([\\d,]+\\.\\d\\d)",
+     "set": {
+      "total": [
+       1,
+       "money"
+      ]
+     }
+    },
+    {
+     "re": "^\\$[\\d,.]+[ \\t]+(\\w+)[ \\t]+x+(\\d{4})",
+     "set": {
+      "payment.cardBrand": [
+       1,
+       "brand"
+      ],
+      "payment.cardLast4": 2
+     }
+    },
+    {
+     "charges": "lines",
+     "cs": true,
+     "re": "^([A-Z][A-Z &().,/0-9-]+?)\\t\\d\\d/\\d\\d - \\d\\d/\\d\\d\\t[^\\n]*?\\$([\\d,]+\\.\\d\\d)[ \\t]*$",
+     "label": 1,
+     "amount": 2
+    }
+   ]
+  },
+  {
+   "id": "enterprise-agreement-email",
+   "company": "enterprise",
+   "collapseBlank": true,
+   "match": [
+    "Enterprise",
+    "^Rental Agreement Summary",
+    "Rental Agreement and Terms and Conditions for RA #"
+   ],
+   "ops": [
+    {
+     "re": "Rental Agreement and Terms and Conditions for RA # (\\w+)",
+     "set": {
+      "agreement": [
+       1,
+       "upper"
+      ]
+     }
+    },
+    {
+     "re": "^Hi, ([^-\\n]+?) - Thanks",
+     "set": {
+      "renter": 1
+     }
+    },
+    {
+     "re": "^((?:Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day, (?:January|February|March|April|May|June|July|August|September|October|November|December) \\d{1,2}, \\d{4} \\d{1,2}:\\d\\d [AP]M)\\t([^\\n]+)\\n([^\\n]+(?:\\n[^\\n,]+)?)\\n([^\\n]+,[ \\t]*[A-Z]{2}[ \\t]+\\d{5}(?:-?\\d{4})?)[ \\t]*$",
+     "cs": true,
+     "set": {
+      "pickup.datetime": [
+       1,
+       "dt"
+      ],
+      "pickup.location": 2,
+      "pickup.address": [
+       3,
+       "join"
+      ],
+      "pickup.city": [
+       4,
+       "city"
+      ]
+     }
+    },
+    {
+     "re": "^(?:Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day, (?:January|February|March|April|May|June|July|August|September|October|November|December) \\d{1,2}, \\d{4} \\d{1,2}:\\d\\d [AP]M\\t[^\\n]+\\n[\\s\\S]*?^((?:Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day, (?:January|February|March|April|May|June|July|August|September|October|November|December) \\d{1,2}, \\d{4} \\d{1,2}:\\d\\d [AP]M)\\t([^\\n]+)",
+     "set": {
+      "return.scheduled": [
+       1,
+       "dt"
+      ],
+      "return.scheduledLocation": 2
+     }
+    },
+    {
+     "re": "^Make / Model:[ \\t]*(\\w+) / ([^\\n]+?)[ \\t]*$",
+     "vehicle": {
+      "make": 1,
+      "model": 2
+     }
+    },
+    {
+     "re": "^Color:[ \\t]*([A-Z][A-Z ]+?)[ \\t]*$",
+     "set": {
+      "vehicle.color": [
+       1,
+       "title"
+      ]
+     }
+    },
+    {
+     "re": "^Mileage:[ \\t]*(\\d+)",
+     "set": {
+      "mileage.out": [
+       1,
+       "int"
+      ]
+     }
+    },
+    {
+     "re": "^Fuel:[ \\t]*([^\\n]+?)[ \\t]*$",
+     "set": {
+      "fuel.out": [
+       1,
+       "nospace"
+      ]
+     }
+    },
+    {
+     "re": "^License #:[ \\t]*([A-Z0-9]+)",
+     "set": {
+      "vehicle.plate": [
+       1,
+       "upper"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "enterprise-agreement-pdf",
+   "company": "enterprise",
+   "match": [
+    "^Rental Agreement Summary",
+    "^RA#:"
+   ],
+   "ops": [
+    {
+     "re": "^RA#:[ \\t]*(\\w+)",
+     "set": {
+      "agreement": [
+       1,
+       "upper"
+      ]
+     }
+    },
+    {
+     "re": "^Renter:[ \\t]*([A-Z][A-Z ]+?)(?:[ \\t]{2,}|[ \\t]*$)",
+     "cs": true,
+     "set": {
+      "renter": 1
+     }
+    },
+    {
+     "re": "^[ \\t]*(\\d{4}) ([A-Z]{2,5}) ([A-Z0-9]{2,5}) \\S+ ",
+     "cs": true,
+     "vehicle": {
+      "year": 1,
+      "make": 2,
+      "model": 3
+     }
+    },
+    {
+     "re": "^[ \\t]*\\d{4} [A-Z]{2,5} [A-Z0-9]{2,5} \\S+ \\$?([A-Z]+(?: [A-Z]+)?)(?:[ \\t]{2,}|[ \\t]*$)",
+     "cs": true,
+     "reject": "MFG",
+     "set": {
+      "vehicle.color": [
+       1,
+       "title"
+      ]
+     }
+    },
+    {
+     "re": "License:[ \\t]*([A-Z]{2})[ \\t]+([A-Z0-9]+)",
+     "cs": true,
+     "set": {
+      "vehicle.plateState": 1,
+      "vehicle.plate": 2
+     }
+    },
+    {
+     "re": "ODO:[ \\t]*(\\d+)[ \\t]*Fuel:[ \\t]*(\\S+)",
+     "set": {
+      "mileage.out": [
+       1,
+       "int"
+      ],
+      "fuel.out": 2
+     }
+    },
+    {
+     "re": "^Make/Model: (\\w+) / (\\S+(?: \\S+)?)(?:[ \\t]{2,}|[ \\t]*$)",
+     "vehicle": {
+      "make": 1,
+      "model": 2
+     }
+    },
+    {
+     "re": "^Color: (\\S+(?: \\S+)?)(?:[ \\t]{2,}|[ \\t]*$)",
+     "set": {
+      "vehicle.color": [
+       1,
+       "title"
+      ]
+     }
+    },
+    {
+     "re": "^Mileage: (\\d+)(?:[ \\t]{2,}|[ \\t]*$)",
+     "set": {
+      "mileage.out": [
+       1,
+       "int"
+      ]
+     }
+    },
+    {
+     "re": "^Fuel: (\\S+(?: \\S+)?)(?:[ \\t]{2,}|[ \\t]*$)",
+     "set": {
+      "fuel.out": 1
+     }
+    },
+    {
+     "re": "^License#: (\\S+)(?:[ \\t]{2,}|[ \\t]*$)",
+     "set": {
+      "vehicle.plate": 1
+     }
+    },
+    {
+     "re": "Pick up[\\s\\S]*?((?:Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day, (?:January|February|March|April|May|June|July|August|September|October|November|December) \\d{1,2}, \\d{4} \\d{1,2}:\\d\\d [AP]M)",
+     "set": {
+      "pickup.datetime": [
+       1,
+       "dt"
+      ]
+     }
+    },
+    {
+     "re": "Anticipated Return[\\s\\S]*?((?:Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day, (?:January|February|March|April|May|June|July|August|September|October|November|December) \\d{1,2}, \\d{4} \\d{1,2}:\\d\\d [AP]M)",
+     "set": {
+      "return.scheduled": [
+       1,
+       "dt"
+      ]
+     }
+    },
+    {
+     "re": "Dates & Times[\\s\\S]*?((?:Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day, (?:January|February|March|April|May|June|July|August|September|October|November|December) \\d{1,2}, \\d{4} \\d{1,2}:\\d\\d [AP]M)[\\s\\S]*?((?:Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day, (?:January|February|March|April|May|June|July|August|September|October|November|December) \\d{1,2}, \\d{4} \\d{1,2}:\\d\\d [AP]M)",
+     "set": {
+      "pickup.datetime": [
+       1,
+       "dt"
+      ],
+      "return.scheduled": [
+       2,
+       "dt"
+      ]
+     }
+    },
+    {
+     "re": "(VISA|DISCOVER|AMEX|MASTERCARD|MC)[ \\t]+\\*+(\\d{4})",
+     "set": {
+      "payment.cardBrand": [
+       1,
+       "brand"
+      ],
+      "payment.cardLast4": 2
+     }
+    }
+   ]
+  },
+  {
+   "id": "enterprise-receipt-pdf",
+   "company": "enterprise",
+   "match": [
+    "Rental Agreement # \\w+",
+    "^Renter Information[ \\t]+Trip Information",
+    "Renter Charges"
+   ],
+   "columns": {
+    "header": "\\b(Pickup)[ \\t]{2,}((?:Intended )?Return)[ \\t]*$",
+    "end": "Renter Charges|Bill-To:",
+    "rightStart": "Renter Charges",
+    "oneWay": "^Intended",
+    "actualReturn": "^Actual Return$",
+    "slack": 3
+   },
+   "ops": [
+    {
+     "re": "Rental Agreement # (\\w+)",
+     "set": {
+      "agreement": [
+       1,
+       "upper"
+      ]
+     }
+    },
+    {
+     "stop": "pickup",
+     "in": "pickup",
+     "dateLine": "^(?:(?:Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day,|\\d{1,2}:\\d\\d [AP]M|20\\d\\d$)",
+     "skip": "^Start Charges$"
+    },
+    {
+     "stop": "return",
+     "in": "return",
+     "dateLine": "^(?:(?:Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day,|\\d{1,2}:\\d\\d [AP]M|20\\d\\d$)",
+     "skip": "^Start Charges$"
+    },
+    {
+     "in": "left",
+     "cs": true,
+     "re": "^Renter Name\\n([A-Z][A-Z ]+(?:\\n[A-Z][A-Z ]+)?)$",
+     "set": {
+      "renter": [
+       1,
+       "join"
+      ]
+     }
+    },
+    {
+     "in": "left",
+     "cs": true,
+     "re": "^Vehicle Information\\n([A-Z0-9]{2,5})$",
+     "vehicle": {
+      "model": 1
+     }
+    },
+    {
+     "in": "left",
+     "re": "^License #: (\\w+)",
+     "set": {
+      "vehicle.plate": [
+       1,
+       "upper"
+      ]
+     }
+    },
+    {
+     "in": "left",
+     "re": "^State/Province: ([A-Z]{2})\\b",
+     "set": {
+      "vehicle.plateState": [
+       1,
+       "upper"
+      ]
+     }
+    },
+    {
+     "in": "left",
+     "cs": true,
+     "re": "^Vehicle Class Driven\\n([^\\n]+/\\n[A-Za-z]+|[^\\n]*[^/\\n])$",
+     "set": {
+      "vehicle.class": [
+       1,
+       "nobreak"
+      ]
+     }
+    },
+    {
+     "in": "left",
+     "re": "^Odometer Mileage/Kilometers\\n(?:[^\\n]*\\n){0,2}?Starting: ([\\d,]+) Ending: ([\\d,]+)$",
+     "set": {
+      "mileage.out": [
+       1,
+       "int"
+      ],
+      "mileage.in": [
+       2,
+       "int"
+      ]
+     }
+    },
+    {
+     "in": "left",
+     "re": "^Odometer Mileage/Kilometers\\n(?:[^\\n]*\\n){0,3}?Total: ([\\d,]+)$",
+     "set": {
+      "mileage.driven": [
+       1,
+       "int"
+      ]
+     }
+    },
+    {
+     "in": "left",
+     "re": "^Fuel\\nStarting: (\\S+)(?: Ending: (\\S+))?",
+     "set": {
+      "fuel.out": 1,
+      "fuel.in": 2
+     }
+    },
+    {
+     "in": "right",
+     "re": "^Total(?:\\t[^\\n]*)?\\t\\$([\\d,]+\\.\\d\\d)$",
+     "set": {
+      "total": [
+       1,
+       "money"
+      ]
+     }
+    },
+    {
+     "in": "right",
+     "charges": "rows",
+     "stop": "^Total\\b",
+     "skip": "^(?:Renter Charges|\\(Subject to audit\\))$",
+     "strip": "^(?:Rental Rate|Coverages|Add-Ons|Mileage|Taxes and Fees|Fuel|Other|Refueling|Equipment)\\s+"
+    },
+    {
+     "re": "Amount charged on [^\\n]*?to (\\w+)",
+     "set": {
+      "payment.cardBrand": [
+       1,
+       "brand"
+      ]
+     }
+    },
+    {
+     "re": "Amount charged on [^\\n]*?to \\w+[ \\t]*\\((\\d{4})\\)|Amount charged on [^\\n]*\\n(?:[^\\n]*\\n){0,2}?[^\\n]*\\((\\d{4})\\)[ \\t]*$",
+     "set": {
+      "payment.cardLast4": [
+       [
+        1,
+        2
+       ],
+       "str"
+      ]
+     }
+    },
+    {
+     "re": "Amount charged on [^\\n]*(?:\\n[^\\n]*){0,2}?\\(\\$([\\d,]+\\.\\d\\d)\\)",
+     "set": {
+      "payment.amountCharged": [
+       1,
+       "money"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "enterprise-receipt-cover",
+   "company": "enterprise",
+   "collapseBlank": true,
+   "match": [
+    "^Subject: Enterprise Rental Agreement \\w+",
+    "attached"
+   ],
+   "ops": [
+    {
+     "re": "^Subject: Enterprise Rental Agreement (\\w+)",
+     "set": {
+      "agreement": [
+       1,
+       "upper"
+      ]
+     }
+    }
+   ]
+  }
+ ],
+ "_comment_templates": "templates: one entry per known receipt layout. match = regexes that must all hit; ops run in order and only fill blank fields. op kinds: re+set {path: group | [group(s), type]}, re+vehicle {year,make,model groups -> vehicleCodes}, charges (lines|paired|rows), stop (trip column). cs=true -> case-sensitive. columns cuts a pdftotext -layout page into regions."
+}

@@ -1,0 +1,46 @@
+# Trippy API. Copy .env.example to .env, edit it, then:
+#   docker compose up -d --build
+# Full guide (Portainer, HTTPS, backups, upgrades): SELF_HOSTING.md
+#
+# Settings come from .env (Docker Compose reads it automatically) or, in Portainer,
+# from the stack's environment variables. Every one has a default.
+name: trippy
+services:
+  api:
+    build: .
+    image: ${TRIPPY_IMAGE:-trippy-api:latest}
+    restart: unless-stopped
+    environment:
+      TRIPPY_DATABASE_URL: sqlite:////data/trippy.db
+      TRIPPY_SECRET_FILE: /data/jwt-secret
+      TRIPPY_JWT_SECRET: ${TRIPPY_JWT_SECRET:-}
+      TRIPPY_SIGNUP_MODE: ${TRIPPY_SIGNUP_MODE:-invite}
+      TRIPPY_SIGNUP_ALLOWLIST: ${TRIPPY_SIGNUP_ALLOWLIST:-}
+      TRIPPY_ALLOWED_ORIGINS: ${TRIPPY_ALLOWED_ORIGINS:-}
+      TRIPPY_DOCS: ${TRIPPY_DOCS:-0}
+      TRIPPY_FORWARDED_ALLOW_IPS: ${TRIPPY_FORWARDED_ALLOW_IPS:-127.0.0.1}
+      TRIPPY_SMTP_HOST: ${TRIPPY_SMTP_HOST:-}
+      TRIPPY_SMTP_PORT: ${TRIPPY_SMTP_PORT:-587}
+      TRIPPY_SMTP_SECURITY: ${TRIPPY_SMTP_SECURITY:-starttls}
+      TRIPPY_SMTP_USERNAME: ${TRIPPY_SMTP_USERNAME:-}
+      TRIPPY_SMTP_PASSWORD: ${TRIPPY_SMTP_PASSWORD:-}
+      TRIPPY_SMTP_FROM: ${TRIPPY_SMTP_FROM:-}
+      TZ: ${TZ:-UTC}
+    ports:
+      # Localhost only by default. Set TRIPPY_BIND=0.0.0.0 to reach it from your LAN.
+      - "${TRIPPY_BIND:-127.0.0.1}:${TRIPPY_PORT:-8000}:8000"
+    volumes:
+      - ${TRIPPY_DATA:-trippy-data}:/data
+    # Hardening: the app writes only to /data.
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 512m
+    pids_limit: 128
+    cpus: 1.0
+
+volumes:
+  trippy-data:

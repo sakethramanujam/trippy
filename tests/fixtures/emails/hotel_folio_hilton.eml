@@ -1,0 +1,102 @@
+From: Travel <noreply@example.com>
+Subject: Hotel folio
+Date: Wed, 01 Jan 2031 00:00:00 +0000
+Content-Type: text/plain; charset=utf-8
+
+                                                                                           HILTON GARDEN INN DEMO MESSE
+                                                                                                MESSEALLEE 1
+                                                                                                 DEMOSTADT85000
+                                                                                                          Germany
+                                                                                          TELEPHONE +1 555-0100 � FAX +1 555-0100
+                                                                                                         Reservations
+                                                                                             www.hilton.com or 1 800 HILTONS
+                  Demo Demo Demo Demo                   Room Number                          101 /T2
+                 1 DEMO STREET                                       Arrival Date                         16/09/2028 17:38:00
+                 1 DEMO STREET                                 Departure Date                       17/09/2028 09:28:00
+                 UNITED STATES OF AMERICA                               Adult/Child                          1/0
+                                                                        Room Rate                            99.00
+                                                                        Rate Plan                            DEMO01
+                                                                        AL
+COPY OF VAT INVOICE:10001                                               Hhonors #
+Confirmation Number: 3400000005                                         TOTAL VAT                            DE 100001
+                                                                        Folio No/Che                         10002 A
+HILTON GARDEN INN DEMO MESSE 17/09/2028 09:28:00
+DATE             DESCRIPTION                             Cashier ID:    REF NO         Guest Charges          CREDIT            BALANCE
+16/09/2028       Wasser Vio                              DAKI                100001              €6.00
+16/09/2028       GUEST ROOM                              DAKI                100001             €99.00
+17/09/2028       MC *0000                                MIKU                100001                                  -€105.00
+                                                                             BALANCE                                               €0.00
+
+
+
+                                TOTAL EXCLUDING          TOTAL VAT               TOTAL
+                                            VAT
+VAT 7%                                       €92.52             €6.48            €99.00
+VAT 0%                                         €0.00            €0.00             €0.00
+VAT 19%                                        €5.04            €0.96             €6.00
+TOTAL AMOUNT                                                                    €105.00
+
+
+
+
+Guest Signature ______________________________________________
+Please debit my account by the amount indicated above.
+
+
+
+
+APPROVAL AMOUNT                     €6.00                          APPROVAL CODE                       100001
+Transaction ID:                     100001                         AMOUNT                              -€105.00
+
+
+
+
+                                                         Page Translated:1
+VAT #, DE 100001,
+                                                      MESSEALLEE 1
+                                                        DEMOSTADT85000
+                                         TELEPHONE +1 555-0100 � FAX +1 555-0100
+
+                 Demo Demo Demo Demo                       Room Number                      101 /T2
+                1 DEMO STREET                                           Arrival Date                     16/09/2028 17:38:00
+                1 DEMO STREET                                     Departure Date                   17/09/2028 09:28:00
+                UNITED STATES OF AMERICA                                   Adult/Child                      1/0
+                                                                           Room Rate                        99.00
+                                                                           Rate Plan                        DEMO01
+                                                                           AL
+COPY OF VAT INVOICE:10001                                                  Hhonors #
+Confirmation Number: 3400000005                                            TOTAL VAT                        DE 100001
+                                                                           Folio No/Che                     10002 A
+HILTON GARDEN INN DEMO MESSE 17/09/2028 09:28:00
+www.fiskaltrust.de
+
+
+
+
+
+
+                                   certification-id: BSI-K-TR-0373
+                                   qr-code-version: V0
+                                   kassen-seriennummer: 0
+                                   processType: Kassenbeleg-V1
+                                   processData: Beleg^6.00_99.00_0.00_0.00_0.00^105.00:Unbar
+                                   transaktions-nummer: 0
+                                   signatur-zaehler: 100001
+                                   start-zeit: 2028-09-17T07:28:20.000Z
+                                   log-time: 2028-09-17T07:28:20.000Z
+                                   sig-alg: ecdsa-plain-SHA384
+                                   log-time-format: UnixTime
+
+
+
+
+
+
+                                   ftCashBoxIdentification: 0
+                                   Belegnummer: 0
+
+
+
+
+                                                           Page Translated:2
+

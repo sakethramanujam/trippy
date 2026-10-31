@@ -1,0 +1,12 @@
+// Committed build settings for the Trippy app and widgets (referenced from project.yml).
+// Personal values go in ios-xcode/Local.xcconfig, which is gitignored.
+// Copy Local.xcconfig.example to Local.xcconfig and fill it in.
+
+// Apple Developer team ID (Xcode > Settings > Accounts). Empty = pick a team in Xcode.
+DEVELOPMENT_TEAM =
+
+// Default Trippy server baked into the build. Empty = http://localhost:8000
+// (the Simulator next to `docker compose up`). People can change it in the app.
+TRIPPY_API_BASE_URL =
+
+#include? "Local.xcconfig"

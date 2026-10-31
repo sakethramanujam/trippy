@@ -1,0 +1,4 @@
+Flight No;Carrier;Origin;Destination;Departure Date;Arrival Date;Record Locator
+DL 1234;Delta Air Lines;atl;bos;2026-06-01 08:00;2026-06-01 10:40;ZZTEST
+DL 1235;Delta Air Lines;BOS;ATL;06/05/2026 18:00;;ZZTEST
+;;;;;;

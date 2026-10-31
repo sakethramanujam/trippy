@@ -1,0 +1,94 @@
+From: Travel <noreply@example.com>
+Subject: Hotel folio
+Date: Wed, 01 Jan 2031 00:00:00 +0000
+Content-Type: text/plain; charset=utf-8
+
+Aloft Demo Airport
+500 Demo Boulevard
+Springfield, TX 78701
+
+
+Tel: +1 555-0100 Fax: +1 555-0100
+
+
+
+DEMO DEMO                                              Page Number            :      1
+                                                              Guest Number           :      100001
+                                                              Folio ID               :      A
+                                                              Arrive Date            :      14-JUL-31     20:58
+                                                              Depart Date            :      16-JUL-31
+                                                              No. Of Guest           :      1
+                                                              Room Number            :      101
+                                                              Marriott Bonvoy Number :      0000
+
+
+
+
+Aloft Springfield DEMOA 16-JUL-31 03:30 9999
+Date           Reference    Description                                                  Charges (USD)       Credits (USD)
+14-JUL-31             46466         Re:Fuel                                                        8.66
+14-JUL-31             RT327         Room Revenue                                                 104.25
+14-JUL-31             RT327         State Tax                                                      6.26
+14-JUL-31             RT327         City/Local Tax                                                11.47
+14-JUL-31             RT327         Springfield Tourism Fee                                             2.09
+15-JUL-31             RT327         Room Revenue                                                 105.75
+15-JUL-31             RT327         State Tax                                                      6.35
+15-JUL-31             RT327         City/Local Tax                                                11.63
+15-JUL-31             RT327         Springfield Tourism Fee                                             2.12
+16-JUL-31      MC           MasterCard                                                                              -277.10
+
+
+             Approve EMV Receipt for MC - 0000: Signature Captured
+             Application Label: MASTERCARD AID: A0000000041010
+             ARC: 00 IAD: 01106070012200006B5B00000000000000FF
+             TSI: E800 TVR: 0000008000
+
+
+
+                                      ** Total                                                  277.10              -277.10
+                                      *** Balance                                                 0.00
+
+
+
+
+                                                     Continued on the next page
+Aloft Demo Airport
+500 Demo Boulevard
+Springfield, TX 78701
+
+
+Tel: +1 555-0100 Fax: +1 555-0100
+
+
+
+DEMO DEMO                                                        Page Number            :          2
+                                                                        Guest Number           :          100001
+                                                                        Folio ID               :          A
+                                                                        Arrive Date            :          14-JUL-31           20:58
+                                                                        Depart Date            :          16-JUL-31
+                                                                        No. Of Guest           :          1
+                                                                        Room Number            :          101
+                                                                        Marriott Bonvoy Number :          0000
+        I agreed to pay all room & incidental charges.
+
+
+
+
+For your convenience, we have prepared this zero-balance folio indicating a $0 balance on your account. Please be advised that any charges not
+reflected on this folio will be charged to the credit card on file with the hotel. While this folio reflects a $0 balance, your credit card may not
+be charged until after your departure. You are ultimately responsible for paying all of your folio charges in full.
+
+
+
+
+EXPENSE SUMMARY REPORT
+                                                              Currency: USD
+
+
+
+Date                Room & Tax        Food & Bev         Telecom               Other           Total           Payment
+07-14-2031               124.07               8.00            0.00              0.66         132.73                 0.00
+07-15-2031               125.85               0.00            0.00              0.00         125.85                 0.00
+                       ------------      ------------    ------------      ------------    ------------        ------------
+Total                    249.92               8.00            0.00              0.66         277.10                 0.00
+

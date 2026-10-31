@@ -1,0 +1,9 @@
+# Only for TRIPPY_INBOUND_MODE=smtp: publish the built-in SMTP receiver.
+#   docker compose -f docker-compose.yml -f docker-compose.smtp.yml up -d
+# By default it is published on 127.0.0.1:2525 (this machine only). Receiving mail from the internet
+# also needs an MX record for your domain pointing at this host and port 25 forwarded to this port,
+# which exposes it to the whole internet. Read SELF_HOSTING.md → Email-in first; IMAP mode needs none of this.
+services:
+  api:
+    ports:
+      - "${TRIPPY_INBOUND_SMTP_BIND:-127.0.0.1}:${TRIPPY_INBOUND_SMTP_HOST_PORT:-2525}:${TRIPPY_INBOUND_SMTP_PORT:-2525}"

@@ -1,0 +1,62 @@
+From: "Avis Rent A Car (SAMPLE)" <sample-receipts@example.com>
+To: "Sample Renter" <renter@example.com>
+Subject: SAMPLE - Your Avis Receipt - Rental Agreement 900000001
+Date: Fri, 06 Mar 2026 11:42:10 -0800
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="==SAMPLE_BOUNDARY_AVIS=="
+
+--==SAMPLE_BOUNDARY_AVIS==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+
+*** SAMPLE RECEIPT - FICTIONAL DATA FOR TESTING ONLY ***
+
+Thank you for choosing Avis. Here is your receipt.
+
+Rental Agreement Number: 900000001
+Reservation Number: 00SAMPLE1US1
+Avis Preferred #: SAMPLE-AV1
+
+PICK-UP
+Los Angeles Intl Airport (LAX)
+Sample Rental Car Center, 1 Example Way
+Los Angeles, CA 90045
+Mon, Mar 02, 2026 10:15 AM
+
+RETURN
+San Francisco Intl Airport (SFO)
+Sample Rental Car Center, 2 Example Way
+San Francisco, CA 94128
+Fri, Mar 06, 2026 11:30 AM
+
+VEHICLE INFORMATION
+Vehicle: 2025 TOYOTA CAMRY 4D SEDAN
+Car Group: C - Intermediate
+License Plate: SMPL001 CA
+Mileage Out: 12,345
+Mileage In: 12,789
+Miles Driven: 444
+Fuel Level Out: 8/8
+Fuel Level In: 8/8
+
+YOUR CHARGES
+Time & Mileage   4 Days @ $52.99/Day      $211.96
+One Way Drop Charge                       $75.00
+Concession Recovery Fee 11.11%            $23.55
+Customer Facility Charge                  $40.00
+Vehicle License Fee                        $6.20
+Tourism Commission Assessment              $7.47
+Sales Tax 9.5%                            $34.68
+Total Charges                    USD     $398.86
+
+Payment: Visa ending in 4242
+
+Questions about this receipt? This is a sample file and is not a real Avis =
+document. No real reservation exists.
+--==SAMPLE_BOUNDARY_AVIS==
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+
+<html><body><p>*** SAMPLE RECEIPT - FICTIONAL DATA FOR TESTING ONLY ***</p>=
+<p>See the plain-text part.</p></body></html>
+--==SAMPLE_BOUNDARY_AVIS==--

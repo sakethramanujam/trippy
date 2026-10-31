@@ -1,0 +1,6 @@
+Trippy Alembic migrations. See `docs/MIGRATIONS.md` for workflow.
+
+- Baseline: `606508135ca0_baseline_current_schema.py`
+- Passport enrichment: `40b8fa012da1_enrich_passport_fields.py`
+
+Always run `alembic upgrade head` after pulling schema changes.
