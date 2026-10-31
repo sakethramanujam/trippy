@@ -163,7 +163,14 @@ TRIPPY_DEV_MODE=1 venv/bin/uvicorn app.main:app --reload
 Trippy is meant to run on your own machine or private network. Keep `.env` private, use HTTPS
 for anything reachable from the internet, and see
 [Reaching it from your phone](SELF_HOSTING.md#reaching-it-from-your-phone).
-Please report vulnerabilities privately instead of in a public issue.
+Please report vulnerabilities privately, not in a public issue. See **[SECURITY.md](SECURITY.md)**
+for how to report and how to harden your server.
+
+## Contributing
+
+Bug reports, importers for new booking emails and design polish are welcome. Read
+**[CONTRIBUTING.md](CONTRIBUTING.md)** for dev setup and conventions, and follow the
+[Code of Conduct](CODE_OF_CONDUCT.md). Never put personal data in issues, fixtures or screenshots.
 
 ## License
 

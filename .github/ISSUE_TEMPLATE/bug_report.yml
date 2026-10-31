@@ -1,0 +1,94 @@
+name: Bug report
+description: Something in Trippy doesn't work the way it should.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this. Please **don't paste personal data**: booking emails,
+        confirmation numbers, names, email addresses, IP addresses or server URLs. Replace them with
+        placeholders such as `ABC123`, `Jane Doe` or `https://trippy.example.com`.
+
+        Found a security problem? Don't open an issue. Report it privately instead:
+        https://github.com/sakethramanujam/trippy/security/advisories/new
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part of Trippy?
+      multiple: true
+      options:
+        - iOS app
+        - Server (API)
+        - Self-hosting / Docker
+        - Importers (email, .ics, CSV, .pkpass, Flighty)
+        - Website
+    validations:
+      required: true
+  - type: input
+    id: app-version
+    attributes:
+      label: App version or commit
+      description: Shown at the bottom of Profile in the app (leave out the server address next to it), or the commit you built from (`git rev-parse --short HEAD`).
+      placeholder: "e.g. 0.2.0 (12) or 3bbf89a"
+  - type: input
+    id: ios
+    attributes:
+      label: iOS version and device
+      placeholder: "e.g. iOS 18.1, iPhone 15 Pro (or Simulator)"
+  - type: input
+    id: server-version
+    attributes:
+      label: Server version
+      description: The `version` field from `curl http://<your-server>/health`.
+      placeholder: "e.g. 0.2.0"
+  - type: dropdown
+    id: deploy
+    attributes:
+      label: How is the server deployed?
+      options:
+        - install.sh / docker compose
+        - Portainer stack
+        - Local dev (uvicorn)
+        - Other
+        - Not applicable
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open a trip
+        2. Tap …
+        3. See …
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Server logs (`docker compose logs --tail=200 api`) or Xcode console output. Scrub them first.
+      render: shell
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: Drag images here. Blur or crop anything personal.
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy
+      options:
+        - label: I removed personal data (emails, confirmation numbers, names, IPs) from logs and screenshots
+          required: true

@@ -1,0 +1,54 @@
+name: Feature request
+description: Suggest an idea or improvement for Trippy.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Trippy is a small, self-hosted hobby project. Ideas that keep it private, simple to host and nice to use
+        are the most likely to land. Please don't include personal data in examples.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What are you trying to do, and what gets in the way today?
+      placeholder: "When I … I have to … because …"
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: What would you like to happen? Sketches and mockups welcome.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Workarounds you use now, or other ways to solve it.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      multiple: true
+      options:
+        - iOS app
+        - Server (API)
+        - Self-hosting / Docker
+        - Importers (email, .ics, CSV, .pkpass, Flighty)
+        - Website
+        - Docs
+    validations:
+      required: true
+  - type: dropdown
+    id: contribute
+    attributes:
+      label: Would you like to work on this?
+      options:
+        - Yes, I'd like to open a pull request
+        - Maybe, with some guidance
+        - No, just suggesting it
+    validations:
+      required: true
