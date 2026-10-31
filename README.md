@@ -16,6 +16,8 @@ backed by a small server you run yourself. No Trippy cloud, no accounts elsewher
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)](docker-compose.yml)
 [![Self-hosted](https://img.shields.io/badge/self--hosted-yes-34C759)](SELF_HOSTING.md)
 
+**[sakethramanujam.github.io/trippy](https://sakethramanujam.github.io/trippy/)**
+
 <br>
 
 <img src="docs/hero.png" width="100%" alt="Trippy: trips map, flight detail, share card and driver's log on iPhone">
