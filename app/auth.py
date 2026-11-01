@@ -133,6 +133,11 @@ def check_password_strength(password: str) -> None:
 
 # --- Tokens -----------------------------------------------------------------
 
+_used_refresh_jtis: dict[str, int] = {}
+_refresh_lock = threading.Lock()
+_MAX_USED_REFRESH_JTIS = 4096
+
+
 def _now() -> datetime:
     return datetime.now(timezone.utc)
 
@@ -153,7 +158,7 @@ def issue_tokens(user: models.User) -> dict:
     }
 
 
-def user_from_token(db: Session, token: str, kind: str) -> models.User:
+def _decode_token_payload(db: Session, token: str, kind: str) -> tuple[models.User, dict]:
     try:
         payload = jwt.decode(token, secret_key(), algorithms=[ALGORITHM])
     except jwt.ExpiredSignatureError:
@@ -167,6 +172,29 @@ def user_from_token(db: Session, token: str, kind: str) -> models.User:
     if user is None or user.is_placeholder or (user.token_version or 0) != payload.get("ver"):
         raise HTTPException(status_code=401, detail="Session is no longer valid",
                             headers={"WWW-Authenticate": "Bearer"})
+    return user, payload
+
+
+def user_from_token(db: Session, token: str, kind: str) -> models.User:
+    user, _ = _decode_token_payload(db, token, kind)
+    return user
+
+
+def consume_refresh_token(db: Session, token: str) -> models.User:
+    """Validate and rotate a refresh token. Replaying an already-consumed refresh token revokes
+    all sessions for that user (reuse detection)."""
+    user, payload = _decode_token_payload(db, token, "refresh")
+    jti = payload.get("jti")
+    if jti:
+        with _refresh_lock:
+            if jti in _used_refresh_jtis:
+                user.token_version = (user.token_version or 0) + 1
+                db.commit()
+                raise HTTPException(status_code=401, detail="Session is no longer valid",
+                                    headers={"WWW-Authenticate": "Bearer"})
+            while len(_used_refresh_jtis) >= _MAX_USED_REFRESH_JTIS:
+                _used_refresh_jtis.pop(next(iter(_used_refresh_jtis)))
+            _used_refresh_jtis[jti] = user.id
     return user
 
 

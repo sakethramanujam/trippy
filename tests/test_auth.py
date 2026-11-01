@@ -65,6 +65,21 @@ def test_refresh_and_logout_revoke_tokens(api):
     assert api.get("/me", headers={"Authorization": "Bearer garbage"}).status_code == 401
 
 
+def test_refresh_token_rotation_and_reuse_detection(api):
+    out = signup(api)
+    r1 = api.post("/auth/refresh", json={"refresh_token": out["refresh_token"]})
+    assert r1.status_code == 200
+    rotated = r1.json()
+    assert rotated["refresh_token"] != out["refresh_token"]
+    assert api.get("/me", headers=bearer(rotated)).status_code == 200
+
+    # Replaying the old refresh token triggers reuse detection: 401 and revokes the active session too
+    replay = api.post("/auth/refresh", json={"refresh_token": out["refresh_token"]})
+    assert replay.status_code == 401
+    assert api.get("/me", headers=bearer(rotated)).status_code == 401
+    assert api.post("/auth/refresh", json={"refresh_token": rotated["refresh_token"]}).status_code == 401
+
+
 def test_forgot_and_reset_password(api, caplog, monkeypatch):
     out = signup(api)
     with caplog.at_level(logging.WARNING, logger="trippy.auth"):

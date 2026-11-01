@@ -143,7 +143,7 @@ def login(body: schemas.LogIn, db: Session = Depends(get_db)):
 
 @router.post("/auth/refresh", response_model=schemas.AuthResponse, dependencies=[Depends(refresh_limit)])
 def refresh(body: schemas.RefreshRequest, db: Session = Depends(get_db)):
-    user = auth.user_from_token(db, body.refresh_token, "refresh")
+    user = auth.consume_refresh_token(db, body.refresh_token)
     return _auth_response(user)
 
 
