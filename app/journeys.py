@@ -21,7 +21,7 @@ from typing import Any, Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from . import access, airports, drives, models, money, stories
+from . import access, airports, drives, models, money, photos, stories
 
 NEAR_MILES = 60          # two places this close count as the same place (SJC ~ Fremont)
 MAX_GAP_DAYS = 2         # back-to-back: the next trip starts within this many calendar days
@@ -375,6 +375,8 @@ def story(db: Session, j: models.Journey, user: models.User) -> dict:
         "edited": False, "updated_at": None,
         "start_date": s["start_date"], "end_date": s["end_date"],
         "items": dated + undated,
+        "trip_photos": [{**p, "day": (_parse(p["taken_at"]).date() - start.date()).days + 1
+                         if p["taken_at"] and start else None} for g in gens for p in g["trip_photos"]],
         "route": _route_join([{"route": g["route"]} for g in gens]),
         "travelers": list(travelers.values()),
         "highlights": list(best.values()),
@@ -406,6 +408,7 @@ def merge(db: Session, target: models.Trip, source: models.Trip) -> dict:
         for r in rows:
             r.trip_id = target.id
         moved[key] = len(rows)
+    moved["photos"] = photos.move(db, source.id, target.id)
     have = {p.id for p in target.participants} | {target.owner_id}
     for p in list(source.participants):
         if p.id not in have:

@@ -14,6 +14,7 @@ from .import_routes import router as import_router
 from .inbound_routes import router as inbound_router
 from .flight_status_routes import router as flight_status_router
 from .drive_routes import router as drive_router
+from .photo_routes import router as photo_router
 from .journey_routes import router as journey_router
 from .money_routes import router as money_router
 from .story_routes import router as story_router
@@ -100,6 +101,7 @@ app.include_router(inbound_router)
 app.include_router(trash_routes.router)
 app.include_router(flight_status_router)
 app.include_router(drive_router)
+app.include_router(photo_router)
 
 Me = Depends(get_current_user)
 

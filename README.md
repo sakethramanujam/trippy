@@ -40,12 +40,12 @@ backed by a small server you run yourself. No Trippy cloud, no accounts elsewher
 <td width="50%" valign="top">🏨 <b>Stays</b><br>Hotels and rentals with check-in, check-out, nights and cost.</td>
 </tr>
 <tr>
-<td valign="top">🚗 <b>Rental cars</b><br>Pickup, return, mileage and cost, collected in a Driver's Log.</td>
+<td valign="top">🚗 <b>Rental cars and drives</b><br>Pickup, return, mileage and cost in a Driver's Log, plus your Google Maps Timeline drives drawn on each trip.</td>
 <td valign="top">🗺️ <b>Journeys</b><br>Link several trips (Lisbon → Madrid) into one route and map.</td>
 </tr>
 <tr>
 <td valign="top">💸 <b>Split expenses</b><br>Add travelers, split equally, by amount, percentage or shares, and settle up.</td>
-<td valign="top">📖 <b>Stories and share cards</b><br>Trip stories, a year-in-travel recap and cards you can save as images.</td>
+<td valign="top">📖 <b>Stories, photos and share cards</b><br>Trip stories, a year-in-travel recap and cards you can save as images. The apps suggest photos from each trip; only small thumbnails reach the server.</td>
 </tr>
 <tr>
 <td valign="top">🔎 <b>Offline and search</b><br>Cached trips work without a connection; search across trips, flights and stays.</td>

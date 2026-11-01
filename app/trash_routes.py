@@ -8,7 +8,7 @@ from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from . import access, models, money, schemas, trash
+from . import access, models, money, photos, schemas, trash
 from .auth import get_current_user
 from .database import get_db
 
@@ -62,6 +62,7 @@ def leave_trip(trip_id: int, force: bool = False, db: Session = Db, me: models.U
     if not force and money.person_net(money.trip_ledger(db, trip), me.id):
         raise HTTPException(status_code=409, detail="You have an unsettled balance on this trip. Settle up first, or pass force=true.")
     trip.participants.remove(me)
+    photos.delete_for_trip(db, trip.id, me.id)  # your thumbnails leave with you
     db.commit()
 
 

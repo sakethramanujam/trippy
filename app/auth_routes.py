@@ -235,6 +235,7 @@ def delete_me(body: schemas.DeleteAccount, user: models.User = Depends(get_curre
     db.query(models.PasswordReset).filter(models.PasswordReset.user_id == user.id).delete()
     db.query(models.TripStory).filter(models.TripStory.user_id == user.id).delete()
     db.query(models.Drive).filter(models.Drive.owner_id == user.id).delete()
+    db.query(models.TripPhoto).filter(models.TripPhoto.user_id == user.id).delete(synchronize_session=False)
     db.query(models.TripInvite).filter(models.TripInvite.invited_by_id == user.id).update(
         {models.TripInvite.invited_by_id: None})
     user.email = f"deleted-{user.id}{auth.PLACEHOLDER_DOMAIN}"

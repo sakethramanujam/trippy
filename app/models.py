@@ -433,3 +433,26 @@ class Drive(Base):
 
     trip = relationship("Trip")
     rental = relationship("RentalCar")
+
+
+class TripPhoto(Base):
+    """A photo you attached to a trip. The full photo never leaves your device: the server keeps a
+    small JPEG thumbnail (≤512 px) and the device's own id for the asset, so the app can open the
+    original on the phone it came from. Only the person who added it sees it."""
+    __tablename__ = "trip_photos"
+    __table_args__ = (Index("uq_trip_photos_asset", "user_id", "trip_id", "device_id", "asset_id", unique=True),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    trip_id = Column(Integer, ForeignKey("trips.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    device_id = Column(String, nullable=False)
+    asset_id = Column(String, nullable=False)
+    taken_at = Column(DateTime, nullable=True, index=True)  # local wall-clock, like the rest of Trippy
+    lat = Column(Float, nullable=True)
+    lng = Column(Float, nullable=True)
+    width = Column(Integer, nullable=False)   # of the thumbnail
+    height = Column(Integer, nullable=False)
+    thumb = Column(LargeBinary, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    trip = relationship("Trip")

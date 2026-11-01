@@ -125,6 +125,8 @@ def remove_trip_participant(db: Session, trip_id: int, user_id: int):
         return None
     if user in trip.participants:
         trip.participants.remove(user)
+        db.query(models.TripPhoto).filter(models.TripPhoto.trip_id == trip.id,
+                                          models.TripPhoto.user_id == user.id).delete(synchronize_session=False)
         db.commit()
         db.refresh(trip)
     return trip
@@ -599,6 +601,7 @@ def delete_trip(db: Session, trip: models.Trip) -> None:
     db.query(models.TripInvite).filter(models.TripInvite.trip_id == trip.id).delete()
     db.query(models.TripStory).filter(models.TripStory.trip_id == trip.id).delete()
     db.query(models.TripPin).filter(models.TripPin.trip_id == trip.id).delete()
+    db.query(models.TripPhoto).filter(models.TripPhoto.trip_id == trip.id).delete(synchronize_session=False)
     trip.participants.clear()
     for e in list(trip.expenses):
         db.delete(e)  # splits cascade

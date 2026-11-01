@@ -155,6 +155,24 @@ Where drives show up (only for you):
   linked to that rental, or inside its pickup–dropoff window, aren't added again. Story stats also carry
   `drives` and `timeline_miles`; year in travel carries `drives` and `timeline_drive_miles`.
 
+## Trip photos (thumbnails)
+
+Not an importer, but similar: the apps look at photos taken during a trip (date taken, and GPS when the
+photo has it) and suggest them; you accept or reject each. Accepted photos stay on your phone — the app
+uploads only a JPEG thumbnail (longest side ≤512 px, ≤256 KB) and the photo's device-local id, so it can
+open the original on the device it came from. Thumbnails are private to whoever added them, hidden while
+the trip is in Recently Deleted, and deleted with the trip, when you leave it, or when you delete your account.
+
+```
+GET    /trips/{id}/photos?device_id=     # yours, oldest first (no image data)
+POST   /trips/{id}/photos  { "device_id", "asset_id", "taken_at", "lat", "lng", "thumb_base64" }  # 201 new, 200 replaced
+GET    /photos/{id}/thumb                # image/jpeg
+DELETE /photos/{id}
+```
+
+Stories (`GET /trips/{id}/story`, `GET /journeys/{id}/story`) include `trip_photos`, each with its trip `day`
+and the `item_key` of the story item it was taken during.
+
 ## Not supported (and why)
 
 - **TripIt API / OAuth**: closed to new developers. Use the calendar feed.

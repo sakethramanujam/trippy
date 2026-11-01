@@ -228,6 +228,8 @@ If you build the app yourself, set the default address in `project.yml`
 ## Back up and restore
 
 Everything lives in two files on the data volume: `trippy.db` and `jwt-secret`.
+Trip photo thumbnails (≤512 px JPEGs, up to 500 per trip per person) are stored in `trippy.db` too, so
+it grows by roughly 30–60 KB per photo. Full-size photos never leave the phones they were taken on.
 
 **Back up** (safe while the server is running):
 

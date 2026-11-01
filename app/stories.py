@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 
 from . import access, airports, models
 from . import drives as drives_mod
+from . import photos as photos_mod
 
 MAX_NOTE = 280
 MAX_TITLE = 80
@@ -394,6 +395,8 @@ def build(db: Session, trip: models.Trip, user: models.User) -> dict[str, Any]:
     story["cover_photo"] = row.cover_photo if row else None
     story["edited"] = row is not None
     story["updated_at"] = _iso(row.updated_at) if row else None
+    start = datetime.fromisoformat(story["start_date"]) if story.get("start_date") else None
+    story["trip_photos"] = photos_mod.story_photos(db, trip, user, items, start)  # your thumbnails, by day
     return story
 
 
