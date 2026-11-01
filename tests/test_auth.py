@@ -96,7 +96,12 @@ def test_forgot_and_reset_password(api, caplog, monkeypatch):
     assert api.post("/auth/reset", json={"token": code, "password": "again again"}).status_code == 400  # single use
     assert api.post("/auth/login", json={"email": "ana@example.com", "password": "brand new pw"}).status_code == 200
     monkeypatch.setenv("TRIPPY_DEV_MODE", "1")
-    assert "dev_reset_token" in api.post("/auth/forgot", json={"email": "ana@example.com"}).json()
+    first_code = api.post("/auth/forgot", json={"email": "ana@example.com"}).json()["dev_reset_token"]
+    second_code = api.post("/auth/forgot", json={"email": "ana@example.com"}).json()["dev_reset_token"]
+    assert first_code != second_code
+    # Re-requesting /auth/forgot invalidates the previous unused reset code
+    assert api.post("/auth/reset", json={"token": first_code, "password": "brand new pw 2"}).status_code == 400
+    assert api.post("/auth/reset", json={"token": second_code, "password": "brand new pw 2"}).status_code == 200
 
 
 def test_login_rate_limit(api):

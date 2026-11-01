@@ -247,19 +247,26 @@ def _hash_token(token: str) -> str:
 
 def create_reset_token(db: Session, user: models.User) -> str:
     # Short, typeable code (no mail sender yet, so people copy it from the server log).
+    now = datetime.utcnow()
+    (db.query(models.PasswordReset)
+       .filter(models.PasswordReset.user_id == user.id, models.PasswordReset.used_at.is_(None))
+       .update({models.PasswordReset.used_at: now}, synchronize_session=False))
     token = "-".join(secrets.token_hex(3).upper() for _ in range(3))
     db.add(models.PasswordReset(user_id=user.id, token_hash=_hash_token(token),
-                                expires_at=datetime.utcnow() + RESET_TTL))
+                                expires_at=now + RESET_TTL))
     db.commit()
     return token
 
 
 def consume_reset_token(db: Session, token: str) -> Optional[models.User]:
+    now = datetime.utcnow()
     row = (db.query(models.PasswordReset)
            .filter(models.PasswordReset.token_hash == _hash_token(token.strip().upper())).first())
-    if row is None or row.used_at is not None or row.expires_at < datetime.utcnow():
+    if row is None or row.used_at is not None or row.expires_at < now:
         return None
-    row.used_at = datetime.utcnow()
+    (db.query(models.PasswordReset)
+       .filter(models.PasswordReset.user_id == row.user_id, models.PasswordReset.used_at.is_(None))
+       .update({models.PasswordReset.used_at: now}, synchronize_session=False))
     return db.get(models.User, row.user_id)
 
 
