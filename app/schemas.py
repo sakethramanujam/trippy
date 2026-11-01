@@ -117,14 +117,46 @@ class FlightBase(BaseModel):
     seat: Optional[str] = None
     cabin_class: Optional[str] = None
     booking_source: Optional[str] = None
+    terminal: Optional[str] = None
+    gate: Optional[str] = None
+    notes: Optional[str] = None
 
 class FlightCreate(FlightBase):
-    pass
+    trip_id: Optional[int] = None
+    external_id: Optional[str] = None
+
+class FlightUpdate(BaseModel):
+    """Partial update: only fields that are sent are changed."""
+    trip_id: Optional[int] = None
+    airline: Optional[str] = None
+    flight_number: Optional[str] = None
+    departure_airport: Optional[str] = None
+    arrival_airport: Optional[str] = None
+    departure_time: Optional[datetime] = None
+    arrival_time: Optional[datetime] = None
+    aircraft_type: Optional[str] = None
+    aircraft_model: Optional[str] = None
+    aircraft_manufacturer: Optional[str] = None
+    delay_minutes: Optional[int] = None
+    status: Optional[str] = None
+    confirmation_number: Optional[str] = None
+    distance_miles: Optional[float] = None
+    duration_minutes: Optional[int] = None
+    cost: Optional[float] = None
+    currency: Optional[str] = None
+    seat: Optional[str] = None
+    cabin_class: Optional[str] = None
+    booking_source: Optional[str] = None
+    terminal: Optional[str] = None
+    gate: Optional[str] = None
+    notes: Optional[str] = None
+    external_id: Optional[str] = None
 
 class Flight(FlightBase):
     id: int
     trip_id: Optional[int] = None
     owner_id: Optional[int] = None
+    external_id: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 

@@ -107,6 +107,9 @@ class Flight(Base):
     seat = Column(String, nullable=True)
     cabin_class = Column(String, nullable=True)  # economy / premium_economy / business / first
     booking_source = Column(String, nullable=True)  # manual / ingestion / api
+    terminal = Column(String, nullable=True)
+    gate = Column(String, nullable=True)
+    notes = Column(Text, nullable=True)
     # Who owns a flight that isn't on a trip (imports); trip flights follow the trip.
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     external_id = Column(String, nullable=True, index=True)

@@ -44,6 +44,10 @@ class FlightStatus:
     arrival_gate: Optional[str] = None
     baggage_claim: Optional[str] = None
     delay_minutes: Optional[int] = None
+    departure_airport: Optional[str] = None
+    arrival_airport: Optional[str] = None
+    airline: Optional[str] = None
+    aircraft_model: Optional[str] = None
     fetched_at: str = field(default_factory=lambda: datetime.utcnow().replace(microsecond=0).isoformat() + "Z")
 
     def to_dict(self) -> dict:
@@ -140,7 +144,11 @@ def aerodatabox(carrier: str, number: str, day: date, key: str, base: str, fetch
         arrival_scheduled=_t(arr, "scheduledTime", "local") or _t(arr, "scheduledTimeLocal"),
         arrival_estimated=_t(arr, "revisedTime", "local") or _t(arr, "predictedTime", "local"),
         arrival_actual=_t(arr, "runwayTime", "local"),
-        arrival_terminal=arr.get("terminal"), arrival_gate=arr.get("gate"), baggage_claim=arr.get("baggageBelt"))
+        arrival_terminal=arr.get("terminal"), arrival_gate=arr.get("gate"), baggage_claim=arr.get("baggageBelt"),
+        departure_airport=_t(dep, "airport", "iata") or dep.get("iata"),
+        arrival_airport=_t(arr, "airport", "iata") or arr.get("iata"),
+        airline=_t(f, "airline", "name"),
+        aircraft_model=_t(f, "aircraft", "model"))
     st.delay_minutes = _minutes(ds, de or da)
     return st
 
@@ -164,7 +172,9 @@ def aviationstack(carrier: str, number: str, day: date, key: str, base: str, fet
         departure_actual=dep.get("actual"), departure_terminal=dep.get("terminal"), departure_gate=dep.get("gate"),
         arrival_scheduled=arr.get("scheduled"), arrival_estimated=arr.get("estimated"),
         arrival_actual=arr.get("actual"), arrival_terminal=arr.get("terminal"), arrival_gate=arr.get("gate"),
-        baggage_claim=arr.get("baggage"), delay_minutes=dep.get("delay"))
+        baggage_claim=arr.get("baggage"), delay_minutes=dep.get("delay"),
+        departure_airport=dep.get("iata"), arrival_airport=arr.get("iata"),
+        airline=_t(f, "airline", "name"), aircraft_model=_t(f, "aircraft", "iata") or _t(f, "aircraft", "icao"))
 
 
 def aeroapi(carrier: str, number: str, day: date, key: str, base: str, fetch: Fetch) -> Optional[FlightStatus]:
@@ -185,7 +195,10 @@ def aeroapi(carrier: str, number: str, day: date, key: str, base: str, fetch: Fe
         departure_gate=f.get("gate_origin"), arrival_scheduled=f.get("scheduled_in"),
         arrival_estimated=f.get("estimated_in"), arrival_actual=f.get("actual_in"),
         arrival_terminal=f.get("terminal_destination"), arrival_gate=f.get("gate_destination"),
-        baggage_claim=f.get("baggage_claim"), delay_minutes=int(delay // 60) if isinstance(delay, (int, float)) else None)
+        baggage_claim=f.get("baggage_claim"), delay_minutes=int(delay // 60) if isinstance(delay, (int, float)) else None,
+        departure_airport=_t(f, "origin", "code_iata") or _t(f, "origin", "code"),
+        arrival_airport=_t(f, "destination", "code_iata") or _t(f, "destination", "code"),
+        aircraft_model=f.get("aircraft_type"))
 
 
 PROVIDERS = {"aerodatabox": aerodatabox, "aviationstack": aviationstack, "aeroapi": aeroapi}

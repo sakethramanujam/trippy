@@ -1,7 +1,7 @@
 """GET /flights/{id}/status: live status from the configured provider, or a 'not configured' answer."""
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import date as date_type, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -16,6 +16,51 @@ _limit = RateLimiter("flight-status", 60, 300)
 # Providers only know flights from about a day before departure; asking earlier wastes free quota.
 WINDOW_BEFORE = timedelta(days=2)
 WINDOW_AFTER = timedelta(days=1)
+
+
+def _iso_local(raw: str | None) -> str | None:
+    if not raw:
+        return None
+    try:
+        return datetime.fromisoformat(raw.strip().replace("Z", "+00:00").replace(" ", "T")).replace(tzinfo=None).isoformat()
+    except ValueError:
+        return raw
+
+
+@router.get("/flights/lookup")
+def lookup_flight_schedule(flight_number: str = "", date: str = "",
+                           user: models.User = Depends(get_current_user), _rl: None = Depends(_limit)):
+    """Look up a flight's schedule/airports/times by number and date (YYYY-MM-DD) without persisting a Flight row."""
+    provider = flight_status.configured()
+    if not provider:
+        raise HTTPException(status_code=503, detail="Live flight status isn't configured on this server.")
+    parts = flight_status.split_flight_number(flight_number or "")
+    if not parts:
+        raise HTTPException(status_code=400, detail="Enter a flight number like UA 123.")
+    try:
+        day = date_type.fromisoformat((date or "").strip()[:10])
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Enter a date as YYYY-MM-DD.") from None
+    try:
+        st = flight_status.lookup(parts[0], parts[1], day)
+    except flight_status.StatusError as e:
+        raise HTTPException(status_code=502, detail=str(e)) from None
+    if st is None:
+        raise HTTPException(status_code=404, detail="No schedule found for that flight and date.")
+    d = st.to_dict()
+    return {
+        "configured": True,
+        "provider": provider,
+        "flight_number": f"{parts[0]} {parts[1]}",
+        "date": day.isoformat(),
+        "departure_time": _iso_local(st.departure_estimated or st.departure_scheduled),
+        "arrival_time": _iso_local(st.arrival_estimated or st.arrival_scheduled),
+        "terminal": st.departure_terminal,
+        "gate": st.departure_gate,
+        "status": d,
+        **d,
+    }
+
 
 
 @router.get("/flights/{flight_id}/status")

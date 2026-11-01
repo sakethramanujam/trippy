@@ -122,3 +122,104 @@ def test_aerodatabox_channel_headers():
         "X-RapidAPI-Key": "k", "X-RapidAPI-Host": "aerodatabox.p.rapidapi.com"}
     assert _aerodatabox_headers("prod.api.market", "k") == {"x-api-market-key": "k"}
     assert _aerodatabox_headers("api.aerodatabox.com", "k") == {"X-Api-Key": "k"}
+
+
+ADB_LOOKUP = [{
+    "status": "Scheduled",
+    "airline": {"name": "United Airlines", "iata": "UA"},
+    "aircraft": {"model": "Boeing 787-9"},
+    "departure": {
+        "airport": {"iata": "SFO", "name": "San Francisco"},
+        "scheduledTime": {"local": "2026-11-01 11:00-07:00"},
+        "terminal": "I",
+        "gate": "G92",
+    },
+    "arrival": {
+        "airport": {"iata": "NRT", "name": "Tokyo Narita"},
+        "scheduledTime": {"local": "2026-11-02 15:00+09:00"},
+    },
+}]
+
+
+def test_flights_lookup_prefill(client, people, monkeypatch):
+    # 503 when flight status provider is not configured
+    r = client.get("/flights/lookup", params={"flight_number": "UA 837", "date": "2026-11-01"})
+    assert r.status_code == 503
+
+    monkeypatch.setenv("TRIPPY_FLIGHT_STATUS_PROVIDER", "aerodatabox")
+    monkeypatch.setenv("TRIPPY_FLIGHT_STATUS_API_KEY", "secret-key")
+    monkeypatch.setattr(flight_status, "_http_get", lambda u, h: ADB_LOOKUP)
+    monkeypatch.setattr(flight_status.lookup, "__defaults__", (flight_status._http_get,))
+
+    # 400 on invalid flight number or date
+    assert client.get("/flights/lookup", params={"flight_number": "not-a-flight", "date": "2026-11-01"}).status_code == 400
+    assert client.get("/flights/lookup", params={"flight_number": "UA 837", "date": "bad-date"}).status_code == 400
+
+    # 200 with schedule prefill
+    res = client.get("/flights/lookup", params={"flight_number": "ua837", "date": "2026-11-01"})
+    assert res.status_code == 200
+    body = res.json()
+    assert body["flight_number"] == "UA 837"
+    assert body["airline"] == "United Airlines"
+    assert body["departure_airport"] == "SFO"
+    assert body["arrival_airport"] == "NRT"
+    assert body["departure_time"].startswith("2026-11-01T11:00:00")
+    assert body["arrival_time"].startswith("2026-11-02T15:00:00")
+    assert body["terminal"] == "I"
+    assert body["gate"] == "G92"
+    assert body["aircraft_model"] == "Boeing 787-9"
+
+    # 404 when provider returns empty schedule
+    monkeypatch.setattr(flight_status, "_http_get", lambda u, h: [])
+    monkeypatch.setattr(flight_status.lookup, "__defaults__", (flight_status._http_get,))
+    flight_status.clear_cache()
+    assert client.get("/flights/lookup", params={"flight_number": "UA 999", "date": "2026-11-01"}).status_code == 404
+
+
+def test_flight_patch_delete_and_extra_fields(client, db, people):
+    created = client.post(f"/trips/{people['trip']}/flights/", json={
+        "airline": "United",
+        "flight_number": "UA 837",
+        "departure_airport": "SFO",
+        "arrival_airport": "NRT",
+        "departure_time": "2026-11-01T11:00:00",
+        "arrival_time": "2026-11-02T15:00:00",
+        "seat": "12A",
+        "cabin_class": "Economy",
+        "terminal": "I",
+        "gate": "G92",
+        "notes": "Window seat, vegetarian meal",
+    })
+    assert created.status_code == 200
+    f = created.json()
+    fid = f["id"]
+    assert f["terminal"] == "I" and f["gate"] == "G92" and f["notes"] == "Window seat, vegetarian meal"
+
+    # PATCH updates only supplied fields
+    patched = client.patch(f"/flights/{fid}", json={
+        "seat": "3A",
+        "cabin_class": "Business",
+        "gate": "G94",
+        "notes": "Upgraded with miles",
+    })
+    assert patched.status_code == 200
+    body = patched.json()
+    assert body["seat"] == "3A"
+    assert body["cabin_class"] == "Business"
+    assert body["terminal"] == "I"
+    assert body["gate"] == "G94"
+    assert body["notes"] == "Upgraded with miles"
+
+    # Non-owner trip participant cannot edit or delete another participant's flight unless trip owner
+    # people["trip"] is owned by people["a"] (client's default user); act as people["b"] (a trip participant,
+    # not trip owner) and verify 403.
+    client.acting_as = people["b"]
+    assert client.get(f"/flights/{fid}").status_code == 200
+    assert client.patch(f"/flights/{fid}", json={"seat": "99Z"}).status_code == 403
+    assert client.delete(f"/flights/{fid}").status_code == 403
+
+    # Owner can delete
+    client.acting_as = people["a"]
+    assert client.delete(f"/flights/{fid}").status_code == 204
+    assert client.get(f"/flights/{fid}").status_code == 404
+

@@ -523,6 +523,23 @@ def remove_participant_from_trip(trip_id: int, user_id: int, force: bool = False
 def read_flights(skip: int = 0, limit: int = 100, user: models.User = Me, db: Session = Depends(get_db)):
     return access.flights(db, user).order_by(models.Flight.id).offset(skip).limit(limit).all()
 
+@app.get("/flights/{flight_id}", response_model=schemas.Flight)
+def read_flight(flight_id: int, user: models.User = Me, db: Session = Depends(get_db)):
+    return access.flight_or_404(db, flight_id, user)
+
+@app.patch("/flights/{flight_id}", response_model=schemas.Flight)
+def update_flight(flight_id: int, patch: schemas.FlightUpdate, user: models.User = Me,
+                  db: Session = Depends(get_db)):
+    db_flight = access.editable_flight_or_404(db, flight_id, user)
+    changes = patch.model_dump(exclude_unset=True)
+    if changes.get("trip_id") is not None:
+        access.trip_or_404(db, changes["trip_id"], user)
+    return crud.update_flight(db, db_flight, changes)
+
+@app.delete("/flights/{flight_id}", status_code=204)
+def delete_flight(flight_id: int, user: models.User = Me, db: Session = Depends(get_db)):
+    crud.delete_flight(db, access.editable_flight_or_404(db, flight_id, user))
+
 @app.get("/expenses/", response_model=list[schemas.Expense])
 def read_expenses(skip: int = 0, limit: int = 100, user: models.User = Me, db: Session = Depends(get_db)):
     return access.expenses(db, user).order_by(models.Expense.id).offset(skip).limit(limit).all()

@@ -68,11 +68,25 @@ def get_trip(db: Session, trip_id: int):
     return db.query(models.Trip).filter(models.Trip.id == trip_id).first()
 
 def create_trip_flight(db: Session, flight: schemas.FlightCreate, trip_id: int, owner_id: Optional[int] = None):
-    db_flight = models.Flight(**flight.model_dump(), trip_id=trip_id, owner_id=owner_id)
+    data = flight.model_dump(exclude={"trip_id"})
+    db_flight = models.Flight(**data, trip_id=trip_id, owner_id=owner_id)
     db.add(db_flight)
     db.commit()
     db.refresh(db_flight)
     return db_flight
+
+
+def update_flight(db: Session, db_flight: models.Flight, patch: dict) -> models.Flight:
+    for key, value in patch.items():
+        setattr(db_flight, key, value)
+    db.commit()
+    db.refresh(db_flight)
+    return db_flight
+
+
+def delete_flight(db: Session, db_flight: models.Flight) -> None:
+    db.delete(db_flight)
+    db.commit()
 
 def create_trip_expense(db: Session, expense: schemas.ExpenseCreate, trip_id: int):
     """An unsplit expense (the payer's own cost)."""

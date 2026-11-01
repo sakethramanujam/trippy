@@ -117,6 +117,21 @@ def expense_or_404(db: Session, expense_id: int, user: models.User) -> models.Ex
     return e
 
 
+def flight_or_404(db: Session, flight_id: int, user: models.User) -> models.Flight:
+    f = flights(db, user).filter(models.Flight.id == flight_id).first()
+    if f is None:
+        raise HTTPException(status_code=404, detail="Flight not found")
+    return f
+
+
+def editable_flight_or_404(db: Session, flight_id: int, user: models.User) -> models.Flight:
+    f = flight_or_404(db, flight_id, user)
+    trip_owner = f.trip.owner_id if f.trip is not None else None
+    if user.id not in (f.owner_id, trip_owner):
+        raise HTTPException(status_code=403, detail="Only its owner or the trip's owner can change that flight")
+    return f
+
+
 def rental_or_404(db: Session, rental_id: int, user: models.User) -> models.RentalCar:
     r = rentals(db, user).filter(models.RentalCar.id == rental_id).first()
     if r is None:
