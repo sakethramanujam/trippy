@@ -347,4 +347,33 @@ def test_shared_trip_participant_cannot_edit_or_delete_others_bookings_or_group_
     assert api.get(f"/drives?journey_id={journey['id']}", headers=cal).status_code == 404
 
 
+def test_importer_caps_items_email_text_and_pdf_text(api):
+    from app.importers import airline_templates, service
+    from app import inbound
+
+    h = bearer(signup(api, email="ana-m5@example.com"))
+    # 1. Generic CSV with > MAX_ITEMS rows is rejected cleanly with 400
+    header = "airline,flight_number,from,to,dep\n"
+    rows = header + ("UA,UA 1,SFO,LAX,2026-05-01T10:00\n" * (service.MAX_ITEMS + 5))
+    r = api.post("/import/preview", json={
+        "source": "csv",
+        "csv_kind": "flight",
+        "text": rows,
+        "mapping": {
+            "airline": "airline",
+            "flight_number": "flight_number",
+            "departure_airport": "from",
+            "arrival_airport": "to",
+            "departure_time": "dep",
+        },
+    }, headers=h)
+    assert r.status_code == 400 and str(service.MAX_ITEMS) in r.json()["detail"]
+
+    # 2. normalize() truncates huge email bodies to MAX_EMAIL_TEXT
+    huge = "A" * (airline_templates.MAX_EMAIL_TEXT + 50_000)
+    assert len(airline_templates.normalize(huge)) <= airline_templates.MAX_EMAIL_TEXT
+    assert len(inbound._pdf_text(b"not-a-valid-pdf")) == 0
+
+
+
 

@@ -234,6 +234,9 @@ def message_id(msg, raw: bytes) -> str:
     return mid[:250] if mid else "sha256:" + hashlib.sha256(raw).hexdigest()
 
 
+MAX_PDF_TEXT = 256 * 1024
+
+
 def _pdf_text(data: bytes) -> str:
     try:
         from pypdf import PdfReader
@@ -243,7 +246,15 @@ def _pdf_text(data: bytes) -> str:
         reader = PdfReader(io.BytesIO(data))
         if reader.is_encrypted:
             return ""
-        return "\n".join((p.extract_text() or "") for p in reader.pages[:MAX_PDF_PAGES])
+        chunks: list[str] = []
+        total = 0
+        for p in reader.pages[:MAX_PDF_PAGES]:
+            t = p.extract_text() or ""
+            chunks.append(t)
+            total += len(t)
+            if total >= MAX_PDF_TEXT:
+                break
+        return "\n".join(chunks)[:MAX_PDF_TEXT]
     except Exception:
         return ""
 

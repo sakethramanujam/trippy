@@ -53,8 +53,13 @@ class Segment:
 
 # ---------------------------------------------------------------- text helpers
 
+MAX_EMAIL_TEXT = 256 * 1024
+
+
 def normalize(body: str) -> str:
     """HTML or text email body -> plain text, one visual line per line, no URLs."""
+    if len(body) > MAX_EMAIL_TEXT:
+        body = body[:MAX_EMAIL_TEXT]
     if re.search(r"<(?:html|body|table|div|td|p|br)\b", body, re.I):
         body = re.sub(r"(?is)<(style|script|head)\b.*?</\1>", " ", body)
         body = re.sub(r"(?i)<br\s*/?>|</(?:p|div|tr|td|th|li|h\d|table)>", "\n", body)

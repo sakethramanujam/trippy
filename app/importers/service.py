@@ -18,6 +18,7 @@ SOURCES = ("ics", "ics_url", "flighty_csv", "pkpass", "email", "csv", "google_ti
 MAX_UPLOAD = 5 * 1024 * 1024
 MAX_TIMELINE_UPLOAD = 20 * 1024 * 1024  # Timeline exports are big; the apps strip rawSignals first
 MAX_DRIVES = 2000
+MAX_ITEMS = 2000
 
 
 def decode_payload(text: Optional[str], data_base64: Optional[str], limit: int = MAX_UPLOAD) -> bytes:
@@ -55,6 +56,8 @@ def run_parser(source: str, data: bytes, filename: str, csv_kind: str, mapping: 
         items, stats = csv_generic.parse_csv(data, csv_kind, mapping)
     else:
         raise ImportError_("Unknown import type")
+    if len(items) > MAX_ITEMS:
+        raise ImportError_(f"That file has more than {MAX_ITEMS} items ({len(items)}); split it into smaller batches")
     return {"needs_mapping": False, "items": items, "stats": stats}
 
 
