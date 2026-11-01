@@ -10,30 +10,34 @@ from pydantic import ValidationError
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from .. import access, models, schemas
-from . import csv_generic, emails, flighty, ics, pkpass
+from .. import access, drives, models, schemas
+from . import csv_generic, emails, flighty, google_timeline, ics, pkpass
 from .common import KINDS, ImportError_, flight_key
 
-SOURCES = ("ics", "ics_url", "flighty_csv", "pkpass", "email", "csv")
+SOURCES = ("ics", "ics_url", "flighty_csv", "pkpass", "email", "csv", "google_timeline")
 MAX_UPLOAD = 5 * 1024 * 1024
+MAX_TIMELINE_UPLOAD = 20 * 1024 * 1024  # Timeline exports are big; the apps strip rawSignals first
+MAX_DRIVES = 2000
 
 
-def decode_payload(text: Optional[str], data_base64: Optional[str]) -> bytes:
+def decode_payload(text: Optional[str], data_base64: Optional[str], limit: int = MAX_UPLOAD) -> bytes:
+    mb = limit // (1024 * 1024)
     if data_base64:
-        if len(data_base64) > MAX_UPLOAD * 4 // 3 + 8:
-            raise ImportError_("That file is larger than 5 MB")
+        if len(data_base64) > limit * 4 // 3 + 8:
+            raise ImportError_(f"That file is larger than {mb} MB")
         try:
             return base64.b64decode(data_base64, validate=False)
         except (binascii.Error, ValueError):
             raise ImportError_("The file data isn't valid base64")
     if text:
-        if len(text) > MAX_UPLOAD:
-            raise ImportError_("That text is larger than 5 MB")
+        if len(text) > limit:
+            raise ImportError_(f"That text is larger than {mb} MB")
         return text.encode("utf-8")
     raise ImportError_("Send a file or paste some text")
 
 
-def run_parser(source: str, data: bytes, filename: str, csv_kind: str, mapping: Optional[dict]) -> dict:
+def run_parser(source: str, data: bytes, filename: str, csv_kind: str, mapping: Optional[dict],
+               timezone: Optional[str] = None) -> dict:
     """Returns {items, stats} or, for a generic CSV without a mapping, {columns, …}."""
     if source in ("ics", "ics_url"):
         items, stats = ics.parse_ics(data, source="ics")
@@ -43,6 +47,8 @@ def run_parser(source: str, data: bytes, filename: str, csv_kind: str, mapping: 
         items, stats = pkpass.parse_pkpass(data)
     elif source == "email":
         items, stats = emails.parse_email(data, filename or "pasted.txt")
+    elif source == "google_timeline":
+        items, stats = google_timeline.parse_timeline(data, timezone)
     elif source == "csv":
         if not mapping:
             return {"needs_mapping": True, **csv_generic.describe(data, csv_kind), "items": [], "stats": {}}
@@ -63,6 +69,8 @@ def find_duplicate(db: Session, me: models.User, kind: str, f: dict) -> Optional
     Recently Deleted count too, so a deleted trip's flights aren't imported again."""
     ext = f.get("external_id")
     conf = (f.get("confirmation_number") or "").strip().upper()
+    if kind == "drive":
+        return drives.find_duplicate(db, me, f)
     if kind == "flight":
         q = access.flights(db, me, include_trashed=True)
         if ext and (hit := q.filter(models.Flight.external_id == ext).first()):
@@ -117,6 +125,8 @@ def dup_reason(db: Session, kind: str, row_id: Optional[int]) -> str:
 
 
 def _batch_key(kind: str, f: dict) -> tuple:
+    if kind == "drive":
+        return (kind, "ext", f.get("external_id"))
     if f.get("external_id"):
         return (kind, "ext", f["external_id"])
     if kind == "flight":
@@ -149,7 +159,8 @@ def mark_duplicates(db: Session, me: models.User, items: list[dict]) -> list[dic
 # --- commit -------------------------------------------------------------------
 
 def _start(kind: str, f: dict) -> Optional[datetime]:
-    return f.get({"flight": "departure_time", "rental": "pickup_time", "lodging": "check_in"}[kind])
+    return f.get({"flight": "departure_time", "rental": "pickup_time", "lodging": "check_in",
+                  "drive": "start_time"}[kind])
 
 
 def trip_for(db: Session, me: models.User, when: Optional[datetime]) -> Optional[models.Trip]:
@@ -170,6 +181,8 @@ def validate(kind: str, fields: dict) -> dict:
     extra = {"external_id": fields.get("external_id")}
     fields = {k: v for k, v in fields.items() if v is not None}
     try:
+        if kind == "drive":
+            return schemas.DriveImport(**fields).model_dump()
         if kind == "flight":
             data = schemas.FlightCreate(**{k: v for k, v in fields.items() if k in schemas.FlightCreate.model_fields}).model_dump()
             data.pop("trip_id", None)
@@ -189,6 +202,7 @@ def commit(db: Session, me: models.User, items: list[dict], trip_id: Optional[in
     fixed_trip = access.trip_or_404(db, trip_id, me) if trip_id else None
     created, skipped = [], []
     seen: set[tuple] = set()
+    matcher = drives.Matcher(db, me) if auto_trip and not fixed_trip else None
     for i, it in enumerate(items):
         kind = it.get("kind")
         data = validate(kind, it.get("fields") or {})
@@ -198,6 +212,11 @@ def commit(db: Session, me: models.User, items: list[dict], trip_id: Optional[in
             skipped.append({"index": i, "kind": kind, "duplicate_of": dup, "reason": dup_reason(db, kind, dup)})
             continue
         seen.add(key)
+        if kind == "drive":
+            row = drives.create(db, me, data, fixed_trip, matcher)
+            created.append({"index": i, "kind": kind, "id": row.id, "trip_id": row.trip_id,
+                            "journey_id": row.journey_id})
+            continue
         trip = fixed_trip or (trip_for(db, me, _start(kind, data)) if auto_trip else None)
         model = {"flight": models.Flight, "rental": models.RentalCar, "lodging": models.Lodging}[kind]
         row = model(**data, owner_id=me.id, trip_id=trip.id if trip else None)

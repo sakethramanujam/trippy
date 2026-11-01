@@ -584,3 +584,59 @@ class TripInvite(BaseModel):
     claimed_at: Optional[datetime] = None
     code_expires_at: Optional[datetime] = None  # an unused invite code exists until then
     model_config = ConfigDict(from_attributes=True)
+
+
+# --- Drives (Google Maps Timeline) ---------------------------------------------------------------
+from datetime import timedelta  # noqa: E402
+
+from pydantic import Field, field_validator  # noqa: E402
+
+
+class DrivePlace(BaseModel):
+    name: Optional[str] = Field(default=None, max_length=120)
+    lat: Optional[float] = Field(default=None, ge=-90, le=90)
+    lng: Optional[float] = Field(default=None, ge=-180, le=180)
+
+
+class DriveStop(DrivePlace):
+    minutes: Optional[int] = Field(default=None, ge=0, le=24 * 60)
+
+
+class DriveImport(BaseModel):
+    """One drive as the importer previews it and the app sends it back to commit."""
+    start_time: datetime
+    end_time: datetime
+    start_utc_offset: Optional[int] = Field(default=None, ge=-16 * 60, le=16 * 60)
+    end_utc_offset: Optional[int] = Field(default=None, ge=-16 * 60, le=16 * 60)
+    distance_miles: float = Field(default=0.0, ge=0, le=5000)
+    duration_minutes: Optional[int] = Field(default=None, ge=0, le=7 * 24 * 60)
+    start_place: Optional[DrivePlace] = None
+    end_place: Optional[DrivePlace] = None
+    stops: List[DriveStop] = Field(default_factory=list, max_length=50)
+    path: List[List[float]] = Field(default_factory=list, max_length=200)
+    external_id: str = Field(min_length=3, max_length=80)
+
+    @field_validator("path")
+    @classmethod
+    def _path(cls, v: List[List[float]]) -> List[List[float]]:
+        for p in v:
+            if len(p) != 2 or not (-90 <= p[0] <= 90 and -180 <= p[1] <= 180):
+                raise ValueError("path points are [lat, lng]")
+        return v
+
+    @field_validator("end_time")
+    @classmethod
+    def _order(cls, v: datetime, info) -> datetime:
+        start = info.data.get("start_time")
+        if start and v < start - timedelta(hours=16):  # offsets can differ
+            raise ValueError("end_time is before start_time")
+        return v
+
+
+class DriveUpdate(BaseModel):
+    trip_id: Optional[int] = None
+    clear_trip: bool = False
+
+
+class DriveRentalLink(BaseModel):
+    rental_id: Optional[int] = None  # None unlinks

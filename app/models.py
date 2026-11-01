@@ -396,3 +396,40 @@ class InboundEmail(Base):
     seen = Column(Boolean, nullable=False, default=False)  # for the in-app badge
     attempts = Column(Integer, nullable=False, default=0)
     __table_args__ = (Index("uq_inbound_emails_user_message", "user_id", "message_id", unique=True),)
+
+
+class Drive(Base):
+    """A drive from Google Maps Timeline (or another location history). Only its owner sees it.
+
+    Times are local wall-clock (like the rest of Trippy) with the UTC offset kept alongside, so
+    a drive across a time zone line still reads right. `path_json` is a downsampled polyline
+    [[lat, lng], …]; `stops_json` lists short stops that were merged into the drive."""
+    __tablename__ = "drives"
+    __table_args__ = (Index("uq_drives_owner_external", "owner_id", "external_id", unique=True),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    owner_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    trip_id = Column(Integer, ForeignKey("trips.id"), nullable=True, index=True)
+    journey_id = Column(Integer, ForeignKey("journeys.id"), nullable=True, index=True)
+    rental_id = Column(Integer, ForeignKey("rental_cars.id"), nullable=True, index=True)  # accepted suggestion
+    source = Column(String, nullable=False, default="google_timeline")
+    external_id = Column(String, nullable=False)
+    start_time = Column(DateTime, nullable=False, index=True)
+    end_time = Column(DateTime, nullable=False)
+    start_utc_offset = Column(Integer, nullable=True)  # minutes east of UTC
+    end_utc_offset = Column(Integer, nullable=True)
+    distance_miles = Column(Float, nullable=False, default=0.0)
+    duration_minutes = Column(Integer, nullable=True)
+    start_name = Column(String, nullable=True)
+    start_lat = Column(Float, nullable=True)
+    start_lng = Column(Float, nullable=True)
+    end_name = Column(String, nullable=True)
+    end_lat = Column(Float, nullable=True)
+    end_lng = Column(Float, nullable=True)
+    path_json = Column(Text, nullable=True)
+    stops_json = Column(Text, nullable=True)
+    dismissed_rentals_json = Column(Text, nullable=True)  # rental ids whose match you said no to
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    trip = relationship("Trip")
+    rental = relationship("RentalCar")

@@ -49,7 +49,7 @@ backed by a small server you run yourself. No Trippy cloud, no accounts elsewher
 </tr>
 <tr>
 <td valign="top">🔎 <b>Offline and search</b><br>Cached trips work without a connection; search across trips, flights and stays.</td>
-<td valign="top">📬 <b>Email-in</b> <sub>(optional)</sub><br>Forward booking confirmations and Trippy files them. Plus .ics, CSV, .pkpass and .eml import.</td>
+<td valign="top">📬 <b>Email-in</b> <sub>(optional)</sub><br>Forward booking confirmations and Trippy files them. Plus .ics, CSV, .pkpass, .eml and Google Maps Timeline (drives) import.</td>
 </tr>
 <tr>
 <td valign="top">📡 <b>Live status</b> <sub>(optional)</sub><br>Bring your own AeroDataBox, Aviationstack or FlightAware AeroAPI key.</td>

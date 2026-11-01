@@ -1,0 +1,79 @@
+[
+ {
+  "startTime": "2024-05-03T07:30:00.000-05:00",
+  "endTime": "2024-05-03T08:15:00.000-05:00",
+  "visit": {
+   "hierarchyLevel": "0",
+   "probability": "0.9",
+   "topCandidate": {
+    "probability": "0.8",
+    "semanticType": "Unknown",
+    "placeID": "FAKE_PLACE_HOTEL",
+    "placeLocation": "geo:30.267200,-97.743100"
+   }
+  }
+ },
+ {
+  "startTime": "2024-05-03T08:15:00.000-05:00",
+  "endTime": "2024-05-03T08:40:00.000-05:00",
+  "activity": {
+   "start": "geo:30.267200,-97.743100",
+   "end": "geo:30.390000,-97.730000",
+   "distanceMeters": "15200.0",
+   "probability": "0.95",
+   "topCandidate": {
+    "type": "in passenger vehicle",
+    "probability": "0.9"
+   }
+  }
+ },
+ {
+  "startTime": "2024-05-03T08:00:00.000-05:00",
+  "endTime": "2024-05-03T10:00:00.000-05:00",
+  "timelinePath": [
+   {
+    "point": "geo:30.300000,-97.740000",
+    "durationMinutesOffsetFromStartTime": "20"
+   },
+   {
+    "point": "geo:30.350000,-97.735000",
+    "durationMinutesOffsetFromStartTime": "30"
+   }
+  ]
+ },
+ {
+  "startTime": "2024-05-03T08:40:00.000-05:00",
+  "endTime": "2024-05-03T08:52:00.000-05:00",
+  "visit": {
+   "topCandidate": {
+    "semanticType": "Cafe",
+    "placeID": "FAKE_PLACE_CAFE",
+    "placeLocation": "geo:30.390000,-97.730000"
+   }
+  }
+ },
+ {
+  "startTime": "2024-05-03T08:52:00.000-05:00",
+  "endTime": "2024-05-03T09:20:00.000-05:00",
+  "activity": {
+   "start": "geo:30.390000,-97.730000",
+   "end": "geo:30.510000,-97.820000",
+   "distanceMeters": "18900",
+   "topCandidate": {
+    "type": "in passenger vehicle"
+   }
+  }
+ },
+ {
+  "startTime": "2024-05-03T12:00:00.000-05:00",
+  "endTime": "2024-05-03T12:30:00.000-05:00",
+  "activity": {
+   "start": "geo:30.510000,-97.820000",
+   "end": "geo:30.512000,-97.822000",
+   "distanceMeters": "900",
+   "topCandidate": {
+    "type": "walking"
+   }
+  }
+ }
+]

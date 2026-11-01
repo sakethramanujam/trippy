@@ -23,6 +23,7 @@ tools. Formats are never invented: if a source has no export we can read, it's l
 | Apple Wallet | a boarding pass `.pkpass` | flights | IATA BCBP standard |
 | Email | a forwarded `.eml`, or paste the email text | rental cars (strong), flights and hotels (heuristic) | mixed |
 | Any CSV | a CSV/TSV/semicolon file and a column mapping | flights, rental cars or hotel stays | you decide |
+| Google Maps Timeline | `Timeline.json` exported from your phone, or a Takeout *Semantic Location History* month file | drives (yours only) | Google's export shapes, checked against public parsers |
 
 ## Calendars (.ics files and feeds)
 
@@ -101,6 +102,49 @@ Required fields:
 
 Dates accept ISO (`2026-06-01 08:00`), US (`06/05/2026 18:00`) and `Jun 5, 2026`. Rows missing a required value are skipped and counted. Comma, semicolon and tab separators are detected.
 
+## Google Maps Timeline (drives)
+
+Timeline now lives on your phone, so export it there:
+
+- **Android**: Settings → Location → Location services → Timeline → **Export Timeline data**. You get `Timeline.json`.
+- **iPhone**: Google Maps → your profile → Your Timeline → ⋯ → Location & privacy settings → **Export Timeline data**.
+  The file is a JSON list with `geo:` coordinates; Trippy reads it too.
+- **Older Takeout exports**: unzip, then pick one file from `Location History/Semantic Location History/<year>/`
+  (for example `2024_MAY.json`). `Records.json` (raw points) isn't read.
+
+What Trippy keeps: only **driving** segments (`IN_PASSENGER_VEHICLE`, `IN_VEHICLE`, `driving`, taxi, motorcycle).
+Each becomes a *drive* with start and end time (local, with the UTC offset), distance, a path thinned to at
+most 120 points, start and end place (the visit before and after it), and short stops. Drives less than
+30 minutes apart are merged and the visit between them is kept as a stop; drives under 0.3 mi are skipped.
+Walks, flights, raw signals and your saved places are never stored.
+
+The on-device export carries each segment's time zone. Takeout files are in UTC, so the apps send your
+device's time zone (`timezone`) and times are shown in it.
+
+Preview shows each drive with the trip or journey it falls in (by date, one day of slack). By default
+(`drives_scope: "trips"`) only drives during your trips or journeys are listed; switch to `"all"` to see
+the rest. Drives are private: other travelers on a trip never see them, and de-dupe only looks at your own
+drives (same drive id, or same start ±2 minutes and distance within 1 mile), so importing the same month
+twice, or both the phone and Takeout copy, adds nothing.
+
+Exports can be large. The apps strip `rawSignals` and other unused parts before uploading; the server
+accepts up to 20 MB of Timeline JSON (`TRIPPY_MAX_IMPORT_BODY_BYTES` caps the preview request). For a
+multi-year export, import a year at a time if you hit the limit.
+
+Drive endpoints (all only ever return your own drives):
+
+```
+GET    /drives?trip_id=&journey_id=&year=&with_path=true
+GET    /drives/{id}
+PATCH  /drives/{id}                 { "trip_id": 12 } or { "clear_trip": true }
+DELETE /drives/{id}
+GET    /drives/rental-suggestions   # drives that start near a rental pickup / end near a dropoff
+POST   /drives/{id}/rental          { "rental_id": 5 }  (null unlinks)
+POST   /drives/{id}/rental/dismiss  { "rental_id": 5 }
+```
+
+Rental matches are suggestions only: nothing is linked until you accept one.
+
 ## Not supported (and why)
 
 - **TripIt API / OAuth**: closed to new developers. Use the calendar feed.
@@ -114,17 +158,19 @@ Dates accept ISO (`2026-06-01 08:00`), US (`06/05/2026 18:00`) and `Jun 5, 2026`
 
 ```
 POST /import/preview
-{ "source": "ics" | "ics_url" | "flighty_csv" | "pkpass" | "email" | "csv",
+{ "source": "ics" | "ics_url" | "flighty_csv" | "pkpass" | "email" | "csv" | "google_timeline",
   "text": "…",            # or
-  "data_base64": "…",     # file bytes (max 5 MB)
+  "data_base64": "…",     # file bytes (max 5 MB; 20 MB for google_timeline)
   "url": "webcal://…",    # ics_url only
   "filename": "x.eml",    # helps the email reader
-  "csv_kind": "flight", "mapping": {…} }
+  "csv_kind": "flight", "mapping": {…},
+  "timezone": "America/Chicago",   # google_timeline: your device zone (Takeout files are UTC)
+  "drives_scope": "trips" }        # google_timeline: "trips" (default) or "all"
 → { "items": [{ "index", "kind", "fields", "summary", "confidence", "warnings", "duplicate_of", "duplicate_in_batch" }],
     "stats": {…}, "new_count": 3, "needs_mapping": false }
 
 POST /import/commit
-{ "items": [{ "kind": "flight", "fields": {…} }], "trip_id": null, "auto_trip": true }
+{ "items": [{ "kind": "flight" | "rental" | "lodging" | "drive", "fields": {…} }], "trip_id": null, "auto_trip": true }
 → { "created": [{ "index", "kind", "id", "trip_id" }], "skipped": [{ "index", "kind", "duplicate_of", "reason" }] }
 
 GET /import/sources   # the list the app's picker shows
@@ -134,3 +180,4 @@ Duplicate rules (against what you can see):
 - flight: same `external_id`, or same flight number on the same day, or same route on the same day.
 - rental: same `external_id` or confirmation number, or same company on the same pickup day.
 - hotel: same `external_id` or confirmation number, or same name on the same check-in day.
+- drive: same drive id, or a start within 2 minutes with a distance within 1 mile (your drives only).

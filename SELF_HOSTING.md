@@ -71,6 +71,7 @@ or in the stack's environment variables in Portainer. `.env.example` documents e
 | `TRIPPY_ALLOWED_ORIGINS` | empty | Browser origins allowed by CORS, comma-separated. Empty (and `*`) means no browser access. The iOS app doesn't need this. |
 | `TRIPPY_DOCS` | `0` | `1` serves `/docs`, `/redoc` and `/openapi.json`. Leave it off on a shared network. |
 | `TRIPPY_MAX_BODY_BYTES` | `8388608` | Largest request body accepted (8 MB). Bigger requests get 413 before sign-in is checked. |
+| `TRIPPY_MAX_IMPORT_BODY_BYTES` | `29360128` | Larger cap for `POST /import/preview` only (28 MB), for Google Maps Timeline exports. Parsing a 20 MB export briefly needs ~250 MB of RAM; lower this on small boxes. |
 | `TRIPPY_LISTEN` | unset | Comma-separated `IP:port` list, for `network_mode: host`. The server binds each address itself and keeps retrying (every 5 s) any that does not exist yet, so a Tailscale address that comes up after Docker at boot still gets served. Use this instead of `"100.x.y.z:8840:8000"` port publishing, which leaves the container stopped after a reboot if the address is late. Include `127.0.0.1:PORT` so the health check works. |
 | `TRIPPY_FORWARDED_ALLOW_IPS` | `127.0.0.1` | IPs whose `X-Forwarded-*` headers are trusted. Set it to your reverse proxy's IP, or `*` if only the proxy can reach the container. |
 | `TRIPPY_SMTP_HOST`, `_PORT`, `_SECURITY`, `_USERNAME`, `_PASSWORD`, `_FROM` | unset | Lets the server email password-reset codes. `_SECURITY` is `starttls` (port 587), `ssl` (port 465), or `none`. |

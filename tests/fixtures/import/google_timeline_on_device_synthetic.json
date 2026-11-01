@@ -1,0 +1,224 @@
+{
+ "semanticSegments": [
+  {
+   "startTime": "2024-05-03T07:30:00.000-05:00",
+   "endTime": "2024-05-03T08:15:00.000-05:00",
+   "startTimeTimezoneUtcOffsetMinutes": -300,
+   "endTimeTimezoneUtcOffsetMinutes": -300,
+   "visit": {
+    "hierarchyLevel": 0,
+    "probability": 0.9,
+    "topCandidate": {
+     "placeId": "FAKE_PLACE_HOTEL",
+     "semanticType": "UNKNOWN",
+     "probability": 0.8,
+     "placeLocation": {
+      "latLng": "30.2672°, -97.7431°"
+     }
+    }
+   }
+  },
+  {
+   "startTime": "2024-05-03T08:15:00.000-05:00",
+   "endTime": "2024-05-03T08:40:00.000-05:00",
+   "startTimeTimezoneUtcOffsetMinutes": -300,
+   "endTimeTimezoneUtcOffsetMinutes": -300,
+   "activity": {
+    "start": {
+     "latLng": "30.2672°, -97.7431°"
+    },
+    "end": {
+     "latLng": "30.39°, -97.73°"
+    },
+    "distanceMeters": 15200.0,
+    "probability": 0.95,
+    "topCandidate": {
+     "type": "IN_PASSENGER_VEHICLE",
+     "probability": 0.9
+    }
+   }
+  },
+  {
+   "startTime": "2024-05-03T08:00:00.000-05:00",
+   "endTime": "2024-05-03T10:00:00.000-05:00",
+   "timelinePath": [
+    {
+     "point": "30.2672°, -97.7431°",
+     "time": "2024-05-03T08:15:00.000-05:00"
+    },
+    {
+     "point": "30.3°, -97.74°",
+     "time": "2024-05-03T08:24:00.000-05:00"
+    },
+    {
+     "point": "30.35°, -97.735°",
+     "time": "2024-05-03T08:33:00.000-05:00"
+    },
+    {
+     "point": "30.39°, -97.73°",
+     "time": "2024-05-03T08:42:00.000-05:00"
+    },
+    {
+     "point": "30.44°, -97.77°",
+     "time": "2024-05-03T08:51:00.000-05:00"
+    },
+    {
+     "point": "30.48°, -97.8°",
+     "time": "2024-05-03T09:00:00.000-05:00"
+    },
+    {
+     "point": "30.51°, -97.82°",
+     "time": "2024-05-03T09:09:00.000-05:00"
+    }
+   ]
+  },
+  {
+   "startTime": "2024-05-03T08:40:00.000-05:00",
+   "endTime": "2024-05-03T08:52:00.000-05:00",
+   "startTimeTimezoneUtcOffsetMinutes": -300,
+   "endTimeTimezoneUtcOffsetMinutes": -300,
+   "visit": {
+    "hierarchyLevel": 0,
+    "probability": 0.9,
+    "topCandidate": {
+     "placeId": "FAKE_PLACE_CAFE",
+     "semanticType": "TYPE_CAFE",
+     "probability": 0.8,
+     "placeLocation": {
+      "latLng": "30.39°, -97.73°"
+     }
+    }
+   }
+  },
+  {
+   "startTime": "2024-05-03T08:52:00.000-05:00",
+   "endTime": "2024-05-03T09:20:00.000-05:00",
+   "startTimeTimezoneUtcOffsetMinutes": -300,
+   "endTimeTimezoneUtcOffsetMinutes": -300,
+   "activity": {
+    "start": {
+     "latLng": "30.39°, -97.73°"
+    },
+    "end": {
+     "latLng": "30.51°, -97.82°"
+    },
+    "distanceMeters": 18900.0,
+    "probability": 0.95,
+    "topCandidate": {
+     "type": "IN_PASSENGER_VEHICLE",
+     "probability": 0.9
+    }
+   }
+  },
+  {
+   "startTime": "2024-05-03T09:20:00.000-05:00",
+   "endTime": "2024-05-03T12:00:00.000-05:00",
+   "startTimeTimezoneUtcOffsetMinutes": -300,
+   "endTimeTimezoneUtcOffsetMinutes": -300,
+   "visit": {
+    "hierarchyLevel": 0,
+    "probability": 0.9,
+    "topCandidate": {
+     "placeId": "FAKE_PLACE_PARK",
+     "semanticType": "UNKNOWN",
+     "probability": 0.8,
+     "placeLocation": {
+      "latLng": "30.51°, -97.82°"
+     }
+    }
+   }
+  },
+  {
+   "startTime": "2024-05-03T12:00:00.000-05:00",
+   "endTime": "2024-05-03T12:30:00.000-05:00",
+   "startTimeTimezoneUtcOffsetMinutes": -300,
+   "endTimeTimezoneUtcOffsetMinutes": -300,
+   "activity": {
+    "start": {
+     "latLng": "30.51°, -97.82°"
+    },
+    "end": {
+     "latLng": "30.512°, -97.822°"
+    },
+    "distanceMeters": 900.0,
+    "probability": 0.95,
+    "topCandidate": {
+     "type": "WALKING",
+     "probability": 0.9
+    }
+   }
+  },
+  {
+   "startTime": "2024-05-03T13:00:00.000-05:00",
+   "endTime": "2024-05-03T13:03:00.000-05:00",
+   "startTimeTimezoneUtcOffsetMinutes": -300,
+   "endTimeTimezoneUtcOffsetMinutes": -300,
+   "activity": {
+    "start": {
+     "latLng": "30.51°, -97.82°"
+    },
+    "end": {
+     "latLng": "30.511°, -97.821°"
+    },
+    "distanceMeters": 300.0,
+    "probability": 0.95,
+    "topCandidate": {
+     "type": "IN_PASSENGER_VEHICLE",
+     "probability": 0.9
+    }
+   }
+  },
+  {
+   "startTime": "2024-05-04T09:00:00.000-05:00",
+   "endTime": "2024-05-04T09:45:00.000-05:00",
+   "startTimeTimezoneUtcOffsetMinutes": -300,
+   "endTimeTimezoneUtcOffsetMinutes": -300,
+   "activity": {
+    "start": {
+     "latLng": "30.51°, -97.82°"
+    },
+    "end": {
+     "latLng": "30.1975°, -97.6664°"
+    },
+    "distanceMeters": 52000.0,
+    "probability": 0.95,
+    "topCandidate": {
+     "type": "IN_PASSENGER_VEHICLE",
+     "probability": 0.9
+    }
+   }
+  },
+  {
+   "startTime": "2024-08-20T17:00:00.000-07:00",
+   "endTime": "2024-08-20T17:40:00.000-07:00",
+   "startTimeTimezoneUtcOffsetMinutes": -420,
+   "endTimeTimezoneUtcOffsetMinutes": -420,
+   "activity": {
+    "start": {
+     "latLng": "37.7749°, -122.4194°"
+    },
+    "end": {
+     "latLng": "37.8044°, -122.2712°"
+    },
+    "distanceMeters": 21000.0,
+    "probability": 0.95,
+    "topCandidate": {
+     "type": "IN_PASSENGER_VEHICLE",
+     "probability": 0.9
+    }
+   }
+  }
+ ],
+ "rawSignals": [
+  {
+   "position": {
+    "LatLng": "30.2672°, -97.7431°",
+    "accuracyMeters": 10,
+    "timestamp": "2024-05-03T07:31:00.000-05:00"
+   }
+  }
+ ],
+ "userLocationProfile": {
+  "frequentPlaces": []
+ }
+}

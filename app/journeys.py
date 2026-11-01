@@ -137,6 +137,7 @@ def reorder(db: Session, j: models.Journey, trip_ids: list[int]) -> models.Journ
 
 
 def delete(db: Session, j: models.Journey) -> None:
+    db.query(models.Drive).filter(models.Drive.journey_id == j.id).update({models.Drive.journey_id: None})
     for t in list(j.trips):
         t.journey_id = None
         t.journey_position = None
@@ -380,7 +381,7 @@ def merge(db: Session, target: models.Trip, source: models.Trip) -> dict:
     moved = Counter()
     for model, key in ((models.Flight, "flights"), (models.RentalCar, "rentals"), (models.Lodging, "stays"),
                        (models.Expense, "expenses"), (models.Activity, "activities"), (models.Document, "documents"),
-                       (models.Settlement, "settlements")):
+                       (models.Settlement, "settlements"), (models.Drive, "drives")):
         rows = db.query(model).filter(model.trip_id == source.id).all()
         for r in rows:
             r.trip_id = target.id

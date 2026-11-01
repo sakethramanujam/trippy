@@ -223,7 +223,7 @@ def test_preview_errors_and_csv_mapping_step(api):
     assert step2["new_count"] == 2
     assert api.post("/import/preview", json={"source": "email", "text": "x"}).status_code == 401
     assert [s["source"] for s in api.get("/import/sources", headers=me).json()] == \
-           ["ics", "ics_url", "flighty_csv", "pkpass", "email", "csv"]
+           ["ics", "ics_url", "flighty_csv", "pkpass", "email", "csv", "google_timeline"]
 
 
 def test_email_import_of_rental_via_api(api):

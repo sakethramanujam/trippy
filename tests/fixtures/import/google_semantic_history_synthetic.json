@@ -1,0 +1,147 @@
+{
+ "timelineObjects": [
+  {
+   "placeVisit": {
+    "location": {
+     "latitudeE7": 302672000,
+     "longitudeE7": -977431000,
+     "placeId": "FAKE_PLACE_HOTEL",
+     "address": "100 Example St",
+     "name": "Example Hotel",
+     "semanticType": "TYPE_UNKNOWN"
+    },
+    "duration": {
+     "startTimestamp": "2024-05-03T12:30:00Z",
+     "endTimestamp": "2024-05-03T13:15:00Z"
+    }
+   }
+  },
+  {
+   "activitySegment": {
+    "startLocation": {
+     "latitudeE7": 302672000,
+     "longitudeE7": -977431000
+    },
+    "endLocation": {
+     "latitudeE7": 303900000,
+     "longitudeE7": -977300000
+    },
+    "duration": {
+     "startTimestamp": "2024-05-03T13:15:00.123Z",
+     "endTimestamp": "2024-05-03T13:40:00Z"
+    },
+    "distance": 15200,
+    "activityType": "IN_PASSENGER_VEHICLE",
+    "confidence": "HIGH",
+    "simplifiedRawPath": {
+     "points": [
+      {
+       "latitudeE7": 303000000,
+       "longitudeE7": -977400000,
+       "timestamp": "2024-05-03T13:20:00Z"
+      },
+      {
+       "latitudeE7": 303500000,
+       "longitudeE7": -977350000,
+       "timestamp": "2024-05-03T13:30:00Z"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "placeVisit": {
+    "location": {
+     "latitudeE7": 303900000,
+     "longitudeE7": -977300000,
+     "placeId": "FAKE_PLACE_CAFE",
+     "name": "Sample Coffee Co."
+    },
+    "duration": {
+     "startTimestampMs": "1714743600000",
+     "endTimestampMs": "1714744320000"
+    }
+   }
+  },
+  {
+   "activitySegment": {
+    "startLocation": {
+     "latitudeE7": 303900000,
+     "longitudeE7": -977300000
+    },
+    "endLocation": {
+     "latitudeE7": 305100000,
+     "longitudeE7": -978199999
+    },
+    "duration": {
+     "startTimestampMs": "1714744320000",
+     "endTimestampMs": "1714746000000"
+    },
+    "activityType": "IN_PASSENGER_VEHICLE",
+    "waypointPath": {
+     "waypoints": [
+      {
+       "latE7": 304400000,
+       "lngE7": -977700000
+      },
+      {
+       "latE7": 304800000,
+       "lngE7": -978000000
+      }
+     ],
+     "distanceMeters": 18900.0
+    }
+   }
+  },
+  {
+   "placeVisit": {
+    "location": {
+     "latitudeE7": 305100000,
+     "longitudeE7": -978199999,
+     "placeId": "FAKE_PLACE_PARK",
+     "name": "Example State Park"
+    },
+    "duration": {
+     "startTimestamp": "2024-05-03T14:20:00Z",
+     "endTimestamp": "2024-05-03T17:00:00Z"
+    }
+   }
+  },
+  {
+   "activitySegment": {
+    "startLocation": {
+     "latitudeE7": 305100000,
+     "longitudeE7": -978199999
+    },
+    "endLocation": {
+     "latitudeE7": 305120000,
+     "longitudeE7": -978220000
+    },
+    "duration": {
+     "startTimestamp": "2024-05-03T17:00:00Z",
+     "endTimestamp": "2024-05-03T17:30:00Z"
+    },
+    "distance": 900,
+    "activityType": "WALKING"
+   }
+  },
+  {
+   "activitySegment": {
+    "startLocation": {
+     "latitudeE7": 305100000,
+     "longitudeE7": -978199999
+    },
+    "endLocation": {
+     "latitudeE7": 301975000,
+     "longitudeE7": -976664000
+    },
+    "duration": {
+     "startTimestamp": "2024-05-04T14:00:00Z",
+     "endTimestamp": "2024-05-04T14:45:00Z"
+    },
+    "distance": 52000,
+    "activityType": "IN_PASSENGER_VEHICLE"
+   }
+  }
+ ]
+}

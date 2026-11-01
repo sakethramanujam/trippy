@@ -532,6 +532,7 @@ def upsert_rental_car_by_external_id(db: Session, external_id: str, rental_car: 
 
 
 def delete_rental_car(db: Session, db_rental_car: models.RentalCar):
+    db.query(models.Drive).filter(models.Drive.rental_id == db_rental_car.id).update({models.Drive.rental_id: None})
     db.delete(db_rental_car)
     db.commit()
 
@@ -594,6 +595,7 @@ def delete_trip(db: Session, trip: models.Trip) -> None:
     """Delete a trip: rentals are unlinked (kept), participants detached, child rows removed."""
     for r in list(trip.rental_cars) + list(trip.lodgings):
         r.trip_id = None
+    db.query(models.Drive).filter(models.Drive.trip_id == trip.id).update({models.Drive.trip_id: None})  # drives are kept
     db.query(models.TripInvite).filter(models.TripInvite.trip_id == trip.id).delete()
     db.query(models.TripStory).filter(models.TripStory.trip_id == trip.id).delete()
     db.query(models.TripPin).filter(models.TripPin.trip_id == trip.id).delete()

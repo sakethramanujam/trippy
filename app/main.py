@@ -13,6 +13,7 @@ from .database import SessionLocal, engine, get_db
 from .import_routes import router as import_router
 from .inbound_routes import router as inbound_router
 from .flight_status_routes import router as flight_status_router
+from .drive_routes import router as drive_router
 from .journey_routes import router as journey_router
 from .money_routes import router as money_router
 from .story_routes import router as story_router
@@ -31,6 +32,9 @@ app = FastAPI(
 )
 
 MAX_BODY = int(os.getenv("TRIPPY_MAX_BODY_BYTES", str(8 * 1024 * 1024)))  # > 5 MB import + base64 overhead
+# Google Maps Timeline exports are bigger than other imports; only the preview endpoint gets more room.
+MAX_IMPORT_BODY = int(os.getenv("TRIPPY_MAX_IMPORT_BODY_BYTES", str(28 * 1024 * 1024)))
+_BIG_BODY_PATHS = ("/import/preview",)
 
 
 class _BodyLimit:
@@ -41,8 +45,9 @@ class _BodyLimit:
     async def __call__(self, scope, receive, send):
         if scope["type"] != "http":
             return await self.app(scope, receive, send)
+        cap = max(MAX_BODY, MAX_IMPORT_BODY) if scope.get("path") in _BIG_BODY_PATHS else MAX_BODY
         for k, v in scope.get("headers", []):
-            if k == b"content-length" and v.isdigit() and int(v) > MAX_BODY:
+            if k == b"content-length" and v.isdigit() and int(v) > cap:
                 return await _too_large(send)
         seen = 0
 
@@ -51,7 +56,7 @@ class _BodyLimit:
             msg = await receive()
             if msg["type"] == "http.request":
                 seen += len(msg.get("body", b""))
-                if seen > MAX_BODY:
+                if seen > cap:
                     raise HTTPException(status_code=413, detail="Request body too large")
             return msg
         return await self.app(scope, limited, send)
@@ -94,6 +99,7 @@ app.include_router(journey_router)
 app.include_router(inbound_router)
 app.include_router(trash_routes.router)
 app.include_router(flight_status_router)
+app.include_router(drive_router)
 
 Me = Depends(get_current_user)
 

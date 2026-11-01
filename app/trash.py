@@ -85,6 +85,7 @@ def soft_delete(db: Session, trip: models.Trip, now: Optional[datetime] = None) 
         if not [t for t in j.trips if t.deleted_at is None]:
             for t in list(j.trips):  # trashed trips still pointing here
                 t.journey_id = None
+            db.query(models.Drive).filter(models.Drive.journey_id == j.id).update({models.Drive.journey_id: None})
             db.delete(j)
     trip.trash_json = json.dumps(saved)
     trip.deleted_at = now or datetime.utcnow()
@@ -118,6 +119,8 @@ def purge(db: Session, trip: models.Trip) -> None:
     for coll in (trip.flights, trip.rental_cars, trip.lodgings):
         for row in list(coll):
             if row.owner_id in (None, trip.owner_id):
+                if isinstance(row, models.RentalCar):
+                    db.query(models.Drive).filter(models.Drive.rental_id == row.id).update({models.Drive.rental_id: None})
                 db.delete(row)
             else:
                 row.trip_id = None

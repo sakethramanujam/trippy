@@ -5,7 +5,7 @@ import re
 from datetime import date, datetime, timedelta, timezone
 from typing import Optional
 
-KINDS = ("flight", "rental", "lodging")
+KINDS = ("flight", "rental", "lodging", "drive")
 
 
 class ImportError_(ValueError):
