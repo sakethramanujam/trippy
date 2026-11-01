@@ -129,7 +129,10 @@ _DUMMY_HASH = auth.hash_password("dummy-password-for-timing-only")
 
 @router.post("/auth/login", response_model=schemas.AuthResponse, dependencies=[Depends(login_limit)])
 def login(body: schemas.LogIn, db: Session = Depends(get_db)):
-    user = _by_email(db, auth.normalize_email(body.email))
+    email = auth.normalize_email(body.email)
+    if email:
+        login_limit.hit(f"email:{email}")
+    user = _by_email(db, email)
     if user is None or user.is_placeholder:
         auth.verify_password(_DUMMY_HASH, body.password)  # same argon2 cost: no timing hint the account exists
         raise HTTPException(status_code=401, detail="Email or password is incorrect")
@@ -154,6 +157,8 @@ def logout(user: models.User = Depends(get_current_user), db: Session = Depends(
 @router.post("/auth/forgot", dependencies=[Depends(forgot_limit)])
 def forgot(body: schemas.ForgotPassword, background: BackgroundTasks, db: Session = Depends(get_db)):
     email = auth.normalize_email(body.email)
+    if email:
+        forgot_limit.hit(f"email:{email}")
     user = _by_email(db, email)
     delivery = "email" if mailer.configured() else "server-log"
     out = {"ok": True, "detail": "If that email has an account, a reset code is on its way.", "delivery": delivery}

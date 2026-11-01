@@ -218,27 +218,44 @@ def consume_reset_token(db: Session, token: str) -> Optional[models.User]:
 # --- Rate limiting (in-process; one container) ------------------------------
 
 class RateLimiter:
-    """Sliding-window limit per client IP and bucket. Raises 429 with Retry-After."""
+    """Sliding-window limit per client IP (and optional secondary key like email) and bucket. Raises 429 with Retry-After."""
 
+    MAX_KEYS = 4096
     _hits: dict[tuple[str, str], deque] = defaultdict(deque)
     _lock = threading.Lock()
 
     def __init__(self, bucket: str, limit: int, window_seconds: int):
         self.bucket, self.limit, self.window = bucket, limit, window_seconds
 
-    def __call__(self, request: Request) -> None:
-        ip = request.client.host if request.client else "unknown"
-        key = (self.bucket, ip)
+    def hit(self, subject: str) -> None:
+        key = (self.bucket, subject or "unknown")
         now = time.monotonic()
         with self._lock:
-            q = self._hits[key]
-            while q and now - q[0] > self.window:
-                q.popleft()
+            q = self._hits.get(key)
+            if q is not None:
+                while q and now - q[0] > self.window:
+                    q.popleft()
+                if not q:
+                    self._hits.pop(key, None)
+                    q = None
+            if q is None:
+                if len(self._hits) >= self.MAX_KEYS:
+                    # Sweep expired entries first; if still full, evict oldest inserted key.
+                    expired = [k for k, dq in self._hits.items() if not dq or now - dq[-1] > self.window]
+                    for k in expired:
+                        self._hits.pop(k, None)
+                    while len(self._hits) >= self.MAX_KEYS:
+                        self._hits.pop(next(iter(self._hits)))
+                q = self._hits[key]
             if len(q) >= self.limit:
                 retry = int(self.window - (now - q[0])) + 1
                 raise HTTPException(status_code=429, detail="Too many attempts. Try again in a minute.",
                                     headers={"Retry-After": str(retry)})
             q.append(now)
+
+    def __call__(self, request: Request) -> None:
+        ip = request.client.host if request.client else "unknown"
+        self.hit(ip)
 
     @classmethod
     def reset(cls) -> None:

@@ -91,6 +91,20 @@ def test_login_rate_limit(api):
     assert codes[:10] == [401] * 10 and codes[10] == 429
 
 
+def test_rate_limiter_caps_keys_and_limits_per_email():
+    lim = auth.RateLimiter("cap-test", limit=2, window_seconds=300)
+    auth.RateLimiter.reset()
+    for i in range(auth.RateLimiter.MAX_KEYS + 100):
+        lim.hit(f"ip-{i}")
+    assert len(auth.RateLimiter._hits) <= auth.RateLimiter.MAX_KEYS
+    auth.RateLimiter.reset()
+    lim.hit("email:ana@example.com")
+    lim.hit("email:ana@example.com")
+    with pytest.raises(auth.HTTPException) as exc:
+        lim.hit("email:ana@example.com")
+    assert exc.value.status_code == 429
+
+
 def test_profile_update_and_change_password(api):
     out = signup(api)
     h = bearer(out)
