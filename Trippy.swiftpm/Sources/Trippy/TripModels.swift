@@ -160,6 +160,7 @@ struct TripEvent: Identifiable {
     let highlight: String?
     let highlightIcon: String?
     var rental: ApiRentalCar? = nil
+    var flight: ApiFlight? = nil
     /// Hotel stays render as one Flighty-style row (nights hero) instead of a time row.
     var lodging: ApiLodging? = nil
     /// Bundled airline / rental logo shown in place of the kind glyph.
@@ -246,6 +247,7 @@ extension ApiTrip {
                                  subtitle: depSub.isEmpty ? nil : depSub.joined(separator: " · "),
                                  highlight: f.seat.map { "Seat \($0)" } ?? f.confirmation_number,
                                  highlightIcon: f.seat != nil ? "carseat.right.fill" : "number",
+                                 flight: f,
                                  brandAsset: BrandLogos.airline(name: f.airline, flightNumber: f.flight_number),
                                  zone: Airports.timeZone(f.departure_airport)))
             out.append(TripEvent(id: "f\(f.id)-a", kind: .arrival, date: arr,
@@ -255,6 +257,7 @@ extension ApiTrip {
                                  title: "Arrive \(Airports.city(f.arrival_airport) ?? f.arrival_airport)",
                                  subtitle: DisplayName.flightStatus(f.status),
                                  highlight: nil, highlightIcon: nil,
+                                 flight: f,
                                  zone: Airports.timeZone(f.arrival_airport)))
         }
         for r in linkedRentals(from: all) {

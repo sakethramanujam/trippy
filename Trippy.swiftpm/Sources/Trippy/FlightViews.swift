@@ -137,6 +137,8 @@ struct FlightCard: View {
                         .animation(Theme.snappy, value: countdown)
                     Spacer(minLength: Theme.s2)
                     HStack(spacing: Theme.s3) {
+                        if let term = flight.terminal, !term.isEmpty { detail("Term", term) }
+                        if let gate = flight.gate, !gate.isEmpty { detail("Gate", gate) }
                         if let seat = flight.seat { detail("Seat", seat) }
                         if let cabin = DisplayName.cabin(flight.cabin_class) { detail("Cabin", cabin) }
                     }
@@ -162,11 +164,49 @@ struct FlightCard: View {
 /// Full flight page: status, the route with big codes, departure/arrival blocks,
 /// then the facts in hairline rows.
 struct FlightDetailView: View {
-    let flight: ApiFlight
+    @ObservedObject var network: NetworkManager
+    let flightId: Int
+    let tripId: Int?
+    private let initial: ApiFlight
+
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
+    @State private var editing = false
+    @State private var moving = false
+    @State private var confirmDelete = false
     @State private var calendarDraft: CalendarEventDraft?
+    @State private var errorText: String?
     @State private var tracking = false
+
+    init(network: NetworkManager, flight: ApiFlight, tripId: Int? = nil) {
+        self.network = network
+        self.flightId = flight.id
+        self.tripId = tripId ?? flight.trip_id
+        self.initial = flight
+    }
+
+    /// Live copy, so edits show up as soon as network reloads.
+    private var flight: ApiFlight {
+        if let tripId = tripId ?? initial.trip_id {
+            if let f = network.trips.first(where: { $0.id == tripId })?.flights.first(where: { $0.id == flightId }) {
+                return f
+            }
+        }
+        for t in network.trips {
+            if let f = t.flights.first(where: { $0.id == flightId }) {
+                return f
+            }
+        }
+        if let f = network.flights.first(where: { $0.id == flightId }) {
+            return f
+        }
+        return initial
+    }
+
+    private var trip: ApiTrip? {
+        let tid = tripId ?? flight.trip_id
+        return tid.flatMap { id in network.trips.first { $0.id == id } }
+    }
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 30)) { ctx in
@@ -185,6 +225,7 @@ struct FlightDetailView: View {
                     quickActions
                     LiveStatusCard(flight: flight)
                     facts
+                    actions
                     Color.clear.frame(height: Theme.s8)
                 }
                 .padding(.horizontal, Theme.pagePadding)
@@ -194,8 +235,36 @@ struct FlightDetailView: View {
         .background(Theme.canvas.ignoresSafeArea())
         .presentationDragIndicator(.visible)
         .presentationBackground(Theme.canvas)
+        .preferredColorScheme(.dark)
         .toastHost()
         .addToCalendar($calendarDraft)
+        .sheet(isPresented: $editing) {
+            AddFlightView(network: network, trip: trip, editing: flight)
+        }
+        .sheet(isPresented: $moving) {
+            if let tripId = trip?.id {
+                MoveToTripSheet(network: network, items: [ItemRef(kind: .flight, id: flightId)], fromTrip: tripId) { err in
+                    if let err { errorText = err } else { dismiss() }
+                }
+            }
+        }
+        .alert("Delete this flight?", isPresented: $confirmDelete) {
+            Button("Delete", role: .destructive) {
+                Task {
+                    if let err = await network.deleteFlight(flight) {
+                        errorText = err
+                    } else {
+                        dismiss()
+                    }
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("\(flight.airline) \(flight.flight_number) is removed from this trip and your stats.")
+        }
+        .alert("Something went wrong", isPresented: Binding(get: { errorText != nil }, set: { if !$0 { errorText = nil } })) {
+            Button("OK", role: .cancel) {}
+        } message: { Text(errorText ?? "") }
         .onAppear {
             if UserDefaults.standard.bool(forKey: "TrippyShowCalendar") { calendarDraft = calendarEvent }
             if UserDefaults.standard.bool(forKey: "TrippyShowToast") { Toasts.copy(flight.confirmation_number ?? "ABC123", label: "Confirmation") }
@@ -349,6 +418,8 @@ struct FlightDetailView: View {
     private var factRows: [Fact] {
         var r: [Fact] = []
         if let c = flight.confirmation_number { r.append(Fact(label: "Confirmation", value: c, mono: true, copyable: true)) }
+        if let term = flight.terminal, !term.isEmpty { r.append(Fact(label: "Terminal", value: term)) }
+        if let gate = flight.gate, !gate.isEmpty { r.append(Fact(label: "Gate", value: gate)) }
         if let s = flight.seat { r.append(Fact(label: "Seat", value: s, mono: true)) }
         if let c = DisplayName.cabin(flight.cabin_class) { r.append(Fact(label: "Cabin", value: c)) }
         if let d = flight.durationText { r.append(Fact(label: "Duration", value: d)) }
@@ -358,6 +429,7 @@ struct FlightDetailView: View {
         if let cost = flight.cost { r.append(Fact(label: "Fare", value: Fmt.money(cost, flight.currency))) }
         if let src = flight.booking_source { r.append(Fact(label: "Booked via", value: src.capitalized)) }
         r.append(Fact(label: "Flight", value: flight.flight_number, mono: true))
+        if let n = flight.notes, !n.isEmpty { r.append(Fact(label: "Notes", value: n)) }
         return r
     }
 
@@ -376,5 +448,18 @@ struct FlightDetailView: View {
             }
         }
         .padding(.vertical, 14)
+    }
+
+    private var actions: some View {
+        HStack(spacing: 10) {
+            Button { editing = true } label: { Label("Edit", systemImage: "pencil") }
+                .buttonStyle(TintedButtonStyle(tint: Theme.stay))
+            if trip != nil {
+                Button { moving = true } label: { Label("Move…", systemImage: "arrow.right.doc.on.clipboard") }
+                    .buttonStyle(TintedButtonStyle(tint: Theme.blue))
+            }
+            Button(role: .destructive) { confirmDelete = true } label: { Label("Delete", systemImage: "trash") }
+                .buttonStyle(TintedButtonStyle(tint: Theme.red))
+        }
     }
 }

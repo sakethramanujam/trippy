@@ -25,7 +25,10 @@ struct FlightLookupPrefill: Equatable {
     var departureHourMinute: (Int, Int)? = nil
     var arrivalHourMinute: (Int, Int)? = nil
     var nextDayArrival: Bool? = nil
+    var terminal: String? = nil
+    var gate: String? = nil
     var terminalGate: String? = nil
+    var aircraftModel: String? = nil
     var message: String? = nil
 
     static func == (lhs: FlightLookupPrefill, rhs: FlightLookupPrefill) -> Bool {
@@ -37,7 +40,10 @@ struct FlightLookupPrefill: Equatable {
             && lhs.arrivalHourMinute?.0 == rhs.arrivalHourMinute?.0
             && lhs.arrivalHourMinute?.1 == rhs.arrivalHourMinute?.1
             && lhs.nextDayArrival == rhs.nextDayArrival
+            && lhs.terminal == rhs.terminal
+            && lhs.gate == rhs.gate
             && lhs.terminalGate == rhs.terminalGate
+            && lhs.aircraftModel == rhs.aircraftModel
             && lhs.message == rhs.message
     }
 }
@@ -272,7 +278,10 @@ enum FlightFormLogic {
             departureHourMinute: depParsed.map { ($0.hour, $0.minute) },
             arrivalHourMinute: arrParsed.map { ($0.hour, $0.minute) },
             nextDayArrival: nextDay,
+            terminal: term,
+            gate: gate,
             terminalGate: termGate,
+            aircraftModel: str("aircraft_model") ?? str("aircraft_type"),
             message: nil
         )
     }
@@ -320,6 +329,29 @@ enum FlightFormLogic {
             date: day, departureClock: dep22, arrivalClock: arr6, nextDayArrival: true
         )
         check(overnightOk.valid && overnightOk.arrivalIso.hasPrefix("2026-11-16T06:15:00"), "accept +1 day overnight arrival")
+
+        // Lookup response parsing unit test
+        let mockJson: [String: Any] = [
+            "flight_number": "UA 1580",
+            "airline": "United Airlines",
+            "departure_airport": "SFO",
+            "arrival_airport": "JFK",
+            "departure_time": "2026-11-15T09:00:00",
+            "arrival_time": "2026-11-15T17:30:00",
+            "terminal": "3",
+            "gate": "F12",
+            "aircraft_model": "Boeing 777-200"
+        ]
+        let mockData = (try? JSONSerialization.data(withJSONObject: mockJson)) ?? Data()
+        let prefill = parseLookupResponse(mockData, flightNumber: "UA 1580")
+        check(prefill.fromAirport == "SFO", "prefill departure airport")
+        check(prefill.toAirport == "JFK", "prefill arrival airport")
+        check(prefill.airline == "United Airlines", "prefill airline")
+        check(prefill.departureHourMinute?.0 == 9 && prefill.departureHourMinute?.1 == 0, "prefill dep time")
+        check(prefill.arrivalHourMinute?.0 == 17 && prefill.arrivalHourMinute?.1 == 30, "prefill arr time")
+        check(prefill.terminal == "3", "prefill terminal")
+        check(prefill.gate == "F12", "prefill gate")
+        check(prefill.aircraftModel == "Boeing 777-200", "prefill aircraft model")
         return failures
     }
 }
@@ -337,7 +369,62 @@ extension NetworkManager {
         }
         let created = r.data.flatMap { try? JSONDecoder().decode(ApiFlight.self, from: $0) }
         await refreshTrip(tripId)
+        await fetchFlights()
         return (created, nil)
+    }
+
+    func updateFlight(_ flightId: Int, tripId: Int?, _ body: [String: Any]) async -> (ApiFlight?, String?) {
+        let r = await send("PATCH", "/flights/\(flightId)", json: body)
+        if r.status == 0 {
+            return (nil, "You're offline. Connect to your Trippy server to update this flight.")
+        }
+        if let err = r.error {
+            return (nil, err)
+        }
+        let updated = r.data.flatMap { try? JSONDecoder().decode(ApiFlight.self, from: $0) }
+        if let tripId { await refreshTrip(tripId) }
+        await fetchTrips()
+        await fetchFlights()
+        return (updated, nil)
+    }
+
+    func deleteFlight(_ flight: ApiFlight) async -> String? {
+        let r = await send("DELETE", "/flights/\(flight.id)")
+        if r.status == 0 {
+            return "You're offline. Connect to your Trippy server to delete this flight."
+        }
+        if let err = r.error {
+            return err
+        }
+        let tripId = flight.trip_id
+        if let tripId { await refreshTrip(tripId) }
+        await fetchTrips()
+        await fetchFlights()
+        if let tripId {
+            var recreate: [String: Any] = [
+                "airline": flight.airline,
+                "flight_number": flight.flight_number,
+                "departure_airport": flight.departure_airport,
+                "arrival_airport": flight.arrival_airport,
+                "status": flight.status,
+                "booking_source": flight.booking_source ?? "manual",
+            ]
+            if let v = flight.departure_time { recreate["departure_time"] = v }
+            if let v = flight.arrival_time { recreate["arrival_time"] = v }
+            if let v = flight.confirmation_number { recreate["confirmation_number"] = v }
+            if let v = flight.seat { recreate["seat"] = v }
+            if let v = flight.cabin_class { recreate["cabin_class"] = v }
+            if let v = flight.terminal { recreate["terminal"] = v }
+            if let v = flight.gate { recreate["gate"] = v }
+            if let v = flight.notes { recreate["notes"] = v }
+            if let v = flight.distance_miles { recreate["distance_miles"] = v }
+            if let v = flight.duration_minutes { recreate["duration_minutes"] = v }
+            let net = self
+            TrashCenter.shared.showCustom(text: "Deleted \(flight.flight_number)", subtitle: "\(flight.departure_airport) → \(flight.arrival_airport)") {
+                _ = await net.createFlight(tripId: tripId, recreate)
+            }
+        }
+        return nil
     }
 
     func lookupFlightSchedule(flightNumber: String, date: Date) async -> FlightLookupPrefill {
@@ -359,7 +446,8 @@ extension NetworkManager {
 
 struct AddFlightView: View {
     @ObservedObject var network: NetworkManager
-    let trip: ApiTrip
+    let trip: ApiTrip?
+    var editing: ApiFlight? = nil
     @Environment(\.dismiss) private var dismiss
 
     @State private var flightNumber = ""
@@ -372,7 +460,8 @@ struct AddFlightView: View {
     @State private var nextDayArrival = false
     @State private var confirmation = ""
     @State private var seat = ""
-    @State private var terminalGate = ""
+    @State private var terminal = ""
+    @State private var gate = ""
     @State private var cabinClass = ""
     @State private var notes = ""
 
@@ -505,7 +594,15 @@ struct AddFlightView: View {
                         .textInputAutocapitalization(.characters)
                         .autocorrectionDisabled()
                         .font(TType.font(.mono, size: 16))
-                    TextField("Terminal / gate", text: $terminalGate, prompt: Text("Optional, e.g. T3 · Gate F12"))
+                    HStack(spacing: 12) {
+                        TextField("Terminal", text: $terminal, prompt: Text("Terminal, e.g. 3"))
+                            .textInputAutocapitalization(.characters)
+                            .autocorrectionDisabled()
+                        Divider()
+                        TextField("Gate", text: $gate, prompt: Text("Gate, e.g. G92"))
+                            .textInputAutocapitalization(.characters)
+                            .autocorrectionDisabled()
+                    }
                     Picker("Cabin", selection: $cabinClass) {
                         Text("Not set").tag("")
                         Text("Economy").tag("economy")
@@ -525,7 +622,7 @@ struct AddFlightView: View {
             }
             .scrollContentBackground(.hidden)
             .background(Theme.sheet.ignoresSafeArea())
-            .navigationTitle("Add Flight")
+            .navigationTitle(editing == nil ? "Add Flight" : "Edit Flight")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
@@ -613,6 +710,25 @@ struct AddFlightView: View {
         let failures = FlightFormLogic.runValidationUnitTests()
         assert(failures.isEmpty, "FlightFormLogic unit test failures: \(failures)")
         let cal = Calendar.current
+        if let f = editing {
+            flightNumber = f.flight_number
+            airline = f.airline
+            fromAirport = f.departure_airport
+            toAirport = f.arrival_airport
+            let dep = f.departureDate ?? Date()
+            let arr = f.arrivalDate ?? dep.addingTimeInterval(2 * 3600)
+            date = cal.startOfDay(for: dep)
+            departureClock = dep
+            arrivalClock = arr
+            nextDayArrival = !cal.isDate(dep, inSameDayAs: arr) && arr > dep
+            confirmation = f.confirmation_number ?? ""
+            seat = f.seat ?? ""
+            terminal = f.terminal ?? ""
+            gate = f.gate ?? ""
+            cabinClass = f.cabin_class ?? ""
+            notes = f.notes ?? ""
+            return
+        }
         let defDay = FlightFormLogic.defaultDate(for: trip)
         date = defDay
         fromAirport = FlightFormLogic.defaultFromAirport(for: trip)
@@ -653,8 +769,11 @@ struct AddFlightView: View {
             arrivalClock = d
         }
         if let nd = res.nextDayArrival { nextDayArrival = nd }
-        if let tg = res.terminalGate, terminalGate.trimmingCharacters(in: .whitespaces).isEmpty {
-            terminalGate = tg
+        if let term = res.terminal, terminal.trimmingCharacters(in: .whitespaces).isEmpty {
+            terminal = term
+        }
+        if let g = res.gate, gate.trimmingCharacters(in: .whitespaces).isEmpty {
+            gate = g
         }
         lookupNotice = "Prefilled from live schedule."
     }
@@ -678,15 +797,25 @@ struct AddFlightView: View {
             "arrival_airport": v.toCode,
             "departure_time": v.departureIso,
             "arrival_time": v.arrivalIso,
-            "status": "Scheduled",
+            "status": editing?.status ?? "Scheduled",
             "confirmation_number": opt(confirmation.uppercased()),
             "seat": opt(seat.uppercased()),
+            "terminal": opt(terminal),
+            "gate": opt(gate.uppercased()),
             "cabin_class": opt(cabinClass),
-            "booking_source": "manual",
+            "notes": opt(notes),
+            "booking_source": editing?.booking_source ?? "manual",
         ]
         if let miles = v.distanceMiles { body["distance_miles"] = miles }
         if let mins = v.durationMinutes { body["duration_minutes"] = mins }
-        let (_, err) = await network.createFlight(tripId: trip.id, body)
+        let err: String?
+        if let editing {
+            (_, err) = await network.updateFlight(editing.id, tripId: editing.trip_id ?? trip?.id, body)
+        } else if let tripId = trip?.id {
+            (_, err) = await network.createFlight(tripId: tripId, body)
+        } else {
+            err = "Select a trip to add this flight to."
+        }
         saving = false
         if let err {
             submitError = err

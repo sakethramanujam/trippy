@@ -82,12 +82,16 @@ struct ApiFlight: Codable, Identifiable {
     var seat: String?
     var cabin_class: String?
     var booking_source: String?
+    var terminal: String?
+    var gate: String?
+    var notes: String?
 
     enum CodingKeys: String, CodingKey {
         case id, trip_id, airline, flight_number, departure_airport, arrival_airport
         case departure_time, arrival_time, aircraft_type, aircraft_model, aircraft_manufacturer
         case delay_minutes, status, confirmation_number, distance_miles, distance_km
         case duration_minutes, cost, currency, seat, cabin_class, booking_source
+        case terminal, gate, notes
     }
 
     init(from decoder: Decoder) throws {
@@ -114,6 +118,9 @@ struct ApiFlight: Codable, Identifiable {
         seat = try c.decodeIfPresent(String.self, forKey: .seat)
         cabin_class = try c.decodeIfPresent(String.self, forKey: .cabin_class)
         booking_source = try c.decodeIfPresent(String.self, forKey: .booking_source)
+        terminal = try c.decodeIfPresent(String.self, forKey: .terminal)
+        gate = try c.decodeIfPresent(String.self, forKey: .gate)
+        notes = try c.decodeIfPresent(String.self, forKey: .notes)
     }
 }
 

@@ -153,11 +153,27 @@ extension NetworkManager {
 @MainActor
 final class TrashCenter: ObservableObject {
     static let shared = TrashCenter()
-    struct Undo: Equatable { let ids: [Int]; let text: String; let token = UUID() }
+    struct Undo: Equatable {
+        let ids: [Int]
+        let text: String
+        var subtitle: String = "In Recently Deleted for 30 days"
+        let token = UUID()
+        var customUndo: (@MainActor () async -> Void)? = nil
+        static func == (lhs: Undo, rhs: Undo) -> Bool { lhs.token == rhs.token }
+    }
     @Published var undo: Undo?
 
     func show(ids: [Int], text: String) {
         let u = Undo(ids: ids, text: text)
+        withAnimation(.snappy) { undo = u }
+        Task {
+            try? await Task.sleep(for: .seconds(UserDefaults.standard.bool(forKey: "TrippyHoldToast") ? 60 : 6))
+            if undo?.token == u.token { withAnimation(.snappy) { undo = nil } }
+        }
+    }
+
+    func showCustom(text: String, subtitle: String = "Tap Undo to restore", action: @escaping @MainActor () async -> Void) {
+        let u = Undo(ids: [], text: text, subtitle: subtitle, customUndo: action)
         withAnimation(.snappy) { undo = u }
         Task {
             try? await Task.sleep(for: .seconds(UserDefaults.standard.bool(forKey: "TrippyHoldToast") ? 60 : 6))
@@ -177,13 +193,17 @@ struct UndoToastHost: View {
                 Image(systemName: "trash.fill").foregroundStyle(Theme.red)
                 VStack(alignment: .leading, spacing: 1) {
                     Text(u.text).type(.calloutStrong).foregroundStyle(.white).lineLimit(1)
-                    Text("In Recently Deleted for 30 days").type(.caption).foregroundStyle(Theme.textSecondary)
+                    Text(u.subtitle).type(.caption).foregroundStyle(Theme.textSecondary)
                 }
                 Spacer(minLength: 8)
                 Button {
                     busy = true
                     Task {
-                        _ = await network.restoreTrips(u.ids)
+                        if let custom = u.customUndo {
+                            await custom()
+                        } else {
+                            _ = await network.restoreTrips(u.ids)
+                        }
                         Haptics.success()
                         busy = false
                         withAnimation(.snappy) { center.undo = nil }

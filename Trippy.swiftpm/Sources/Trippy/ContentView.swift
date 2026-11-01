@@ -92,7 +92,7 @@ struct ContentView: View {
                 ImportView(network: network)
             }
             .sheet(item: $openFlight) { flight in
-                FlightDetailView(flight: flight)
+                FlightDetailView(network: network, flight: flight)
             }
             .onChange(of: network.trips.count, initial: true) { _, _ in
                 let id = UserDefaults.standard.integer(forKey: "TrippyOpenFlight")

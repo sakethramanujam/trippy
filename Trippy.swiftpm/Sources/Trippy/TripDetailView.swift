@@ -33,6 +33,7 @@ struct TripDetailView: View {
     @State private var showStory = false
     @State private var showShare = false
     @State private var openStay: ApiLodging?
+    @State private var openFlight: ApiFlight?
     @State private var showAddStay = false
     @State private var showAddFlight = false
     @State private var showLink = false
@@ -122,6 +123,9 @@ struct TripDetailView: View {
         }
         .sheet(item: $openStay, onDismiss: { Task { await network.refreshTrip(tripId) } }) { stay in
             StayDetailSheet(network: network, stay: stay, tripId: tripId)
+        }
+        .sheet(item: $openFlight, onDismiss: { Task { await network.refreshTrip(tripId) } }) { flight in
+            FlightDetailView(network: network, flight: flight, tripId: tripId)
         }
         .sheet(isPresented: $showAddStay, onDismiss: { Task { await network.refreshTrip(tripId) } }) {
             StayFormSheet(network: network, tripId: tripId, defaultCheckIn: Fmt.parse(trip.start_date))
@@ -297,6 +301,7 @@ struct TripDetailView: View {
                 .padding(.bottom, 4)
             }
             TripTimeline(events: snap.events, now: now, onOpenStay: { openStay = $0 },
+                         onOpenFlight: { openFlight = $0 },
                          onMove: { moving = [$0] },
                          onStartSelect: { ref in withAnimation(.snappy) { selectedItems = [ref] } },
                          selection: selectedItems == nil ? nil : Binding(get: { selectedItems ?? [] }, set: { selectedItems = $0 }))
@@ -792,6 +797,7 @@ struct TripTimeline: View {
     let events: [TripEvent]
     let now: Date
     var onOpenStay: (ApiLodging) -> Void = { _ in }
+    var onOpenFlight: (ApiFlight) -> Void = { _ in }
     /// "Move to trip…" on a booking's long-press menu (flights, stays, rentals).
     var onMove: ((ItemRef) -> Void)? = nil
     /// Long-press → "Select" starts multi-select with that booking.
@@ -867,6 +873,11 @@ struct TripTimeline: View {
         if let stay = event.lodging {
             Button { Haptics.tap(); onOpenStay(stay) } label: {
                 StayRow(stay: stay, now: now, isLast: idx == events.count - 1)
+            }
+            .buttonStyle(.plain)
+        } else if let flight = event.flight {
+            Button { Haptics.tap(); onOpenFlight(flight) } label: {
+                TripEventRow(event: event, now: now, isLast: idx == events.count - 1)
             }
             .buttonStyle(.plain)
         } else if let rental = event.rental {

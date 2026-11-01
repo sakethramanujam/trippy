@@ -226,7 +226,7 @@ struct TripSearchView: View {
             if let trip = network.trips.first(where: { $0.id == id }) { TripDetailView(trip: trip, network: network) }
         case .flight(let id):
             if let f = network.trips.flatMap(\.flights).first(where: { $0.id == id }) ?? network.flights.first(where: { $0.id == id }) {
-                FlightDetailView(flight: f)
+                FlightDetailView(network: network, flight: f)
             }
         case .rental(let id):
             if let r = network.rentals.first(where: { $0.id == id }) ?? network.trips.flatMap(\.rental_cars).first(where: { $0.id == id }) {
