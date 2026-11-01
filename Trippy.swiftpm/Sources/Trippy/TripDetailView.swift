@@ -34,6 +34,7 @@ struct TripDetailView: View {
     @State private var showShare = false
     @State private var openStay: ApiLodging?
     @State private var showAddStay = false
+    @State private var showAddFlight = false
     @State private var showLink = false
     @State private var showMergePicker = false
     @State private var pendingMerge: ApiTrip?
@@ -125,6 +126,9 @@ struct TripDetailView: View {
         .sheet(isPresented: $showAddStay, onDismiss: { Task { await network.refreshTrip(tripId) } }) {
             StayFormSheet(network: network, tripId: tripId, defaultCheckIn: Fmt.parse(trip.start_date))
         }
+        .sheet(isPresented: $showAddFlight, onDismiss: { Task { await network.refreshTrip(tripId) } }) {
+            AddFlightView(network: network, trip: trip)
+        }
         .sheet(isPresented: $showAddExpense) {
             SplitExpenseSheet(network: network, scope: .trip(trip.id)) { Task { await reloadBalances() } }
         }
@@ -212,6 +216,7 @@ struct TripDetailView: View {
                     Divider()
                     Button { showAddPerson = true } label: { Label("Add traveler", systemImage: "person.badge.plus") }
                     Button { showAddExpense = true } label: { Label("Add expense", systemImage: "plus.circle") }
+                    Button { showAddFlight = true } label: { Label("Add flight", systemImage: "airplane") }
                     Button { showAddStay = true } label: { Label("Add stay", systemImage: "bed.double") }
                     Divider()
                     if let jid = trip.journey_id {
@@ -264,7 +269,33 @@ struct TripDetailView: View {
 
     private func itinerary(_ snap: TripSnapshot, now: Date) -> some View {
         VStack(alignment: .leading, spacing: Theme.s2) {
-            sectionTitle("Itinerary", trailing: snap.events.isEmpty ? nil : "\(snap.events.count) events")
+            HStack(alignment: .firstTextBaseline) {
+                Text("Itinerary").type(.title3).foregroundStyle(.white)
+                Spacer()
+                if let trailing = snap.events.isEmpty ? nil : "\(snap.events.count) events" {
+                    MicroLabel(text: trailing)
+                }
+                if !trip.flights.isEmpty {
+                    Button { showAddFlight = true } label: {
+                        Label("Add flight", systemImage: "airplane")
+                            .type(.footnoteStrong)
+                            .foregroundStyle(Theme.stay)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(Theme.stay.opacity(0.16), in: Capsule())
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.leading, 6)
+                }
+            }
+            if trip.flights.isEmpty {
+                Button { showAddFlight = true } label: {
+                    Label("Add flight", systemImage: "airplane")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(TintedButtonStyle(tint: Theme.stay))
+                .padding(.bottom, 4)
+            }
             TripTimeline(events: snap.events, now: now, onOpenStay: { openStay = $0 },
                          onMove: { moving = [$0] },
                          onStartSelect: { ref in withAnimation(.snappy) { selectedItems = [ref] } },
@@ -435,6 +466,7 @@ struct TripDetailView: View {
         if d.bool(forKey: "TrippyShowSplit") { showAddExpense = true }
         // Stays: -TrippyOpenStay N (or "first"), -TrippyShowAddStay YES, -TrippyEditStay YES (with OpenStay)
         if d.bool(forKey: "TrippyShowAddStay") { showAddStay = true }
+        if d.bool(forKey: "TrippyShowAddFlight") { showAddFlight = true }
         if let v = d.string(forKey: "TrippyOpenStay") {
             openStay = Int(v).flatMap { id in trip.lodgings.first { $0.id == id } } ?? trip.lodgings.first
         }
