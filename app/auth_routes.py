@@ -233,6 +233,10 @@ def delete_me(body: schemas.DeleteAccount, user: models.User = Depends(get_curre
         db.query(model).filter(model.owner_id == user.id).update({model.owner_id: None})
     db.query(models.Group).filter(models.Group.owner_id == user.id).update({models.Group.owner_id: None})
     db.query(models.PasswordReset).filter(models.PasswordReset.user_id == user.id).delete()
+    db.query(models.InboundEmail).filter(models.InboundEmail.user_id == user.id).delete()
+    db.query(models.Journey).filter(models.Journey.owner_id == user.id).delete()
+    db.query(models.TripPin).filter(models.TripPin.user_id == user.id).delete()
+    db.query(models.DismissedSuggestion).filter(models.DismissedSuggestion.user_id == user.id).delete()
     db.query(models.TripStory).filter(models.TripStory.user_id == user.id).delete()
     db.query(models.Drive).filter(models.Drive.owner_id == user.id).delete()
     db.query(models.TripPhoto).filter(models.TripPhoto.user_id == user.id).delete(synchronize_session=False)
@@ -242,6 +246,7 @@ def delete_me(body: schemas.DeleteAccount, user: models.User = Depends(get_curre
     user.username = f"former.member.{user.id}"
     user.display_name = "Former member"
     user.home_airport = None
+    user.inbound_token = None
     user.hashed_password = "!deleted"
     user.is_placeholder = True
     user.legacy_owner = False

@@ -200,15 +200,28 @@ def test_delete_account_keeps_shared_ledgers(api, db):
     trip = api.post("/trips/", json={"title": "Shared"}, headers=bearer(ana)).json()
     add_and_redeem(api, bearer(ana), trip["id"], "Ben", "ben@example.com", bearer(ben))
     mine = api.post("/trips/", json={"title": "Ben solo"}, headers=bearer(ben)).json()
+    ben_id = ben["user"]["id"]
+    ben_row = db.get(models.User, ben_id)
+    ben_row.inbound_token = "bentoken1234"
+    db.add(models.InboundEmail(user_id=ben_id, message_id="<ben-mail@x>", status="imported", raw=b"Secret PII"))
+    db.add(models.Journey(owner_id=ben_id, title="Ben Journey"))
+    db.add(models.TripPin(user_id=ben_id, trip_id=trip["id"]))
+    db.add(models.DismissedSuggestion(user_id=ben_id, trip_key="1,2"))
+    db.commit()
     r = api.post(f"/trips/{trip['id']}/expenses/split", headers=bearer(ana), json={
-        "amount": 40, "description": "Taxi", "payer_id": ben["user"]["id"],
-        "split_among": [ana["user"]["id"], ben["user"]["id"]]})
+        "amount": 40, "description": "Taxi", "payer_id": ben_id,
+        "split_among": [ana["user"]["id"], ben_id]})
     assert r.status_code == 200, r.text
     assert api.request("DELETE", "/me", json={"password": "wrong pw!!"}, headers=bearer(ben)).status_code == 400
     assert api.request("DELETE", "/me", json={"password": "correct horse 1"}, headers=bearer(ben)).status_code == 204
     assert db.get(models.Trip, mine["id"]) is None
-    gone = db.get(models.User, ben["user"]["id"])
+    assert db.query(models.InboundEmail).filter_by(user_id=ben_id).count() == 0
+    assert db.query(models.Journey).filter_by(owner_id=ben_id).count() == 0
+    assert db.query(models.TripPin).filter_by(user_id=ben_id).count() == 0
+    assert db.query(models.DismissedSuggestion).filter_by(user_id=ben_id).count() == 0
+    gone = db.get(models.User, ben_id)
     assert gone.is_placeholder and not (gone.hashed_password or "").startswith("$argon2") and "ben@" not in gone.email
+    assert gone.inbound_token is None and gone.home_airport is None
     assert api.post("/auth/login", json={"email": "ben@example.com", "password": "correct horse 1"}).status_code == 401
     bal = api.get(f"/trips/{trip['id']}/balances", headers=bearer(ana))
     assert bal.status_code == 200
