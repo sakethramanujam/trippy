@@ -82,7 +82,8 @@ After you edit `.env`, apply the change with `docker compose up -d`.
 
 ## Accounts and sign-up
 
-- **The first account.** The first person to sign up on an empty server always gets in,
+- **The first account.** The first person to sign up on an empty server always gets in
+  (unless `TRIPPY_SIGNUP_ALLOWLIST` is set, in which case the first account must match the allowlist),
   whatever the mode. Create your own account right after the first start, before you share
   the address with anyone.
 - **`open`**. Anyone who can reach the server can create an account. Only use this on a
@@ -402,7 +403,7 @@ days before departure until a day after it, and caches each answer, so a small f
 | Provider | Free tier (checked Oct 2026) | Notes |
 | --- | --- | --- |
 | AeroDataBox (RapidAPI / API.market) | about 400 units a month; one status lookup costs about 2 | Gates, terminals, revised times, baggage belt. |
-| AviationStack | 100 requests a month | The free plan is **HTTP only**, so the key crosses the network unencrypted. Paid plans support HTTPS (set the base URL to `https://api.aviationstack.com/v1`). |
+| AviationStack | 100 requests a month | Defaults to `https://api.aviationstack.com/v1` so the API key is encrypted in transit. (AviationStack's free tier is HTTP-only; prefer AeroDataBox if you don't have a paid HTTPS plan.) |
 | FlightAware AeroAPI | Pay per query; needs a card on file | Most complete data. |
 | OpenSky Network | Free | **Not supported**: it has live positions by transponder only, with no schedules, gates or delays. |
 

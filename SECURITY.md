@@ -65,10 +65,10 @@ Out of scope:
 Trippy is built to run on your own machine or private network. A few things matter most:
 
 - **Keep sign-up invite-only.** Use `TRIPPY_SIGNUP_MODE=invite` (or `closed` once everyone has an account)
-  so strangers can't create accounts. See [Accounts and sign-up](SELF_HOSTING.md#accounts-and-sign-up).
+  and set `TRIPPY_SIGNUP_ALLOWLIST` to your email before exposing a fresh server so strangers can't claim the first account. See [Accounts and sign-up](SELF_HOSTING.md#accounts-and-sign-up).
 - **Bind to localhost, your LAN or Tailscale.** The default `TRIPPY_BIND=127.0.0.1` keeps it local.
   Reach it from your phone over your home network or [Tailscale](SELF_HOSTING.md#tailscale-private-works-away-from-home)
-  rather than opening a port on your router.
+  rather than opening a port on your router. Never set `TRIPPY_FORWARDED_ALLOW_IPS=*` when `TRIPPY_BIND=0.0.0.0`.
 - **Use HTTPS for anything beyond your own network.** Put it behind a reverse proxy that terminates TLS
   (for example [Caddy](SELF_HOSTING.md#caddy-public-https-on-your-own-domain) or
   [Cloudflare Tunnel](SELF_HOSTING.md#cloudflare-tunnel-public-https-no-open-ports)).

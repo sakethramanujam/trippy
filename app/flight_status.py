@@ -154,8 +154,8 @@ def aerodatabox(carrier: str, number: str, day: date, key: str, base: str, fetch
 
 
 def aviationstack(carrier: str, number: str, day: date, key: str, base: str, fetch: Fetch) -> Optional[FlightStatus]:
-    # The free plan is HTTP-only; set TRIPPY_FLIGHT_STATUS_BASE_URL=https://... on a paid plan.
-    base = base or "http://api.aviationstack.com/v1"
+    # Default to HTTPS so the access_key query parameter is never sent in cleartext unless explicitly overridden.
+    base = base or "https://api.aviationstack.com/v1"
     q = urllib.parse.urlencode({"access_key": key, "flight_iata": f"{carrier}{number}"})
     data = fetch(f"{base.rstrip('/')}/flights?{q}", {})
     rows = (data or {}).get("data") if isinstance(data, dict) else None

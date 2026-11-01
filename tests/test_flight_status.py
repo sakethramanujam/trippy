@@ -72,10 +72,12 @@ def test_aerodatabox_parse_and_headers():
 
 
 def test_aviationstack_filters_by_day():
+    calls = []
     data = {"data": [{"flight_date": "2026-10-31", "flight_status": "landed"},
                      {"flight_date": "2026-11-01", "flight_status": "active",
                       "departure": {"gate": "G1", "delay": 12}, "arrival": {"baggage": "3"}}]}
-    st = flight_status.aviationstack("UA", "837", date(2026, 11, 1), "K", "", lambda u, h: data)
+    st = flight_status.aviationstack("UA", "837", date(2026, 11, 1), "K", "", lambda u, h: calls.append(u) or data)
+    assert calls[0].startswith("https://api.aviationstack.com/v1/flights?")
     assert (st.status, st.departure_gate, st.delay_minutes) == ("en_route", "G1", 12)
     with pytest.raises(flight_status.StatusError):
         flight_status.aviationstack("UA", "837", date(2026, 11, 1), "K", "", lambda u, h: {"error": {"code": 101}})
