@@ -10,8 +10,8 @@ options:
 settings:
   base:
     SWIFT_VERSION: "5.0"
-    MARKETING_VERSION: "0.0.1"
-    CURRENT_PROJECT_VERSION: "1"
+    MARKETING_VERSION: "0.2.1"
+    CURRENT_PROJECT_VERSION: "3"
 targets:
   Trippy:
     type: application
@@ -37,12 +37,13 @@ targets:
         # People can change it in the app (sign-in screen > Server), or override it with the
         # TRIPPY_API_BASE_URL env var in the Xcode scheme.
         TRIPPY_API_BASE_URL: $(TRIPPY_API_BASE_URL)
-        # Plain HTTP is allowed only to local-network hosts (*.local, unqualified names, IPs).
-        # Public servers should use https (Caddy or Cloudflare Tunnel, see SELF_HOSTING.md).
+        # Plain HTTP is allowed so self-hosted LAN and Tailscale (100.64.0.0/10) servers work out of the box.
+        # Public servers should still use https (Caddy or Cloudflare Tunnel, see SELF_HOSTING.md).
         NSAppTransportSecurity:
-          NSAllowsLocalNetworking: true
+          NSAllowsArbitraryLoads: true
         NSLocalNetworkUsageDescription: Trippy connects to the Trippy server you choose, which may be on your local network, to load your trips, rentals and expenses.
         NSPhotoLibraryAddUsageDescription: Trippy saves the trip and year cards you create to your photo library.
+        NSPhotoLibraryUsageDescription: Trippy suggests photos you took during a trip, by date and place, and shows them on the trip and in your stories. Full photos stay on your iPhone.
         ITSAppUsesNonExemptEncryption: false
         # Background refresh keeps reminders and widgets current (see LiveStatus.swift).
         BGTaskSchedulerPermittedIdentifiers:

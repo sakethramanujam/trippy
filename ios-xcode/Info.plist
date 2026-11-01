@@ -28,13 +28,15 @@
 	<false/>
 	<key>NSAppTransportSecurity</key>
 	<dict>
-		<key>NSAllowsLocalNetworking</key>
+		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Trippy connects to the Trippy server you choose, which may be on your local network, to load your trips, rentals and expenses.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Trippy saves the trip and year cards you create to your photo library.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Trippy suggests photos you took during a trip, by date and place, and shows them on the trip and in your stories. Full photos stay on your iPhone.</string>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
 	<key>TRIPPY_API_BASE_URL</key>

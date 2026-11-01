@@ -17,9 +17,9 @@ let package = Package(
             name: "Trippy",
             targets: ["Trippy"],
             bundleIdentifier: "samalabs",
-            displayVersion: "0.0.1",
-            bundleVersion: "1",
-            appIcon: .placeholder(icon: .twoPeople),
+            displayVersion: "0.2.1",
+            bundleVersion: "3",
+            appIcon: .asset("AppIcon"),
             accentColor: .presetColor(.blue),
             supportedDeviceFamilies: [
                 .pad,
