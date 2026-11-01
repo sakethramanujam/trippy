@@ -55,8 +55,20 @@ def dev_mode() -> bool:
     return _flag("TRIPPY_DEV_MODE")
 
 
+_LOOPBACK_HOSTS = {"127.0.0.1", "localhost", "::1"}
+
+
 def dev_bypass() -> bool:
-    return _flag("TRIPPY_DEV_AUTH_BYPASS")
+    if not _flag("TRIPPY_DEV_AUTH_BYPASS"):
+        return False
+    bind = os.getenv("TRIPPY_BIND", "127.0.0.1").strip()
+    if bind and bind not in _LOOPBACK_HOSTS:
+        raise RuntimeError(f"TRIPPY_DEV_AUTH_BYPASS=1 is refused when TRIPPY_BIND={bind!r} (loopback only)")
+    for addr in os.getenv("TRIPPY_LISTEN", "").split(","):
+        host = addr.strip().rsplit(":", 1)[0].strip("[]")
+        if host and host not in _LOOPBACK_HOSTS:
+            raise RuntimeError(f"TRIPPY_DEV_AUTH_BYPASS=1 is refused when TRIPPY_LISTEN includes {addr.strip()!r}")
+    return True
 
 
 def first_signup_claims_legacy() -> bool:

@@ -57,6 +57,20 @@ def test_bad_signup_mode_fails_loudly(monkeypatch):
         auth.signup_mode()
 
 
+def test_dev_bypass_refused_on_non_loopback_bind(monkeypatch):
+    from app import auth
+    monkeypatch.setenv("TRIPPY_DEV_AUTH_BYPASS", "1")
+    monkeypatch.setenv("TRIPPY_BIND", "127.0.0.1")
+    assert auth.dev_bypass() is True
+    monkeypatch.setenv("TRIPPY_BIND", "0.0.0.0")
+    with pytest.raises(RuntimeError):
+        auth.dev_bypass()
+    monkeypatch.setenv("TRIPPY_BIND", "127.0.0.1")
+    monkeypatch.setenv("TRIPPY_LISTEN", "127.0.0.1:8000,192.168.1.10:8000")
+    with pytest.raises(RuntimeError):
+        auth.dev_bypass()
+
+
 def test_reset_code_is_emailed_when_smtp_is_configured(api, monkeypatch):
     sent = []
     monkeypatch.setenv("TRIPPY_SMTP_HOST", "smtp.example.com")
