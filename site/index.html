@@ -42,6 +42,7 @@
         <li><a href="#features">Features</a></li>
         <li><a href="#screens">Screenshots</a></li>
         <li><a href="#import">Import</a></li>
+        <li><a href="#android">Android</a></li>
         <li><a href="#self-host">Self-host</a></li>
         <li><a class="btn btn-sm btn-ghost" href="https://github.com/sakethramanujam/trippy">
           <svg class="gh" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
@@ -149,6 +150,70 @@
   </div>
 </section>
 
+<section class="section extras" id="drives" aria-labelledby="drives-title">
+  <div class="wrap">
+    <p class="eyebrow reveal">Drives</p>
+    <h2 id="drives-title" class="reveal">Your drives, from Google Maps.</h2>
+    <p class="muted reveal feature-copy">Export Timeline on your phone, import the file, and review a preview. Drives attach to trips and journeys and add miles to the Driver's Log. One file import from the phone's Timeline export.</p>
+    <ul class="shot-band">
+      <li class="reveal">
+        <div class="phone shot"><img src="assets/shots/android-timeline-import.jpg" width="540" height="1200" alt="Import preview of three Timeline drives for a Denver ski weekend" loading="lazy" decoding="async"></div>
+        <p>Preview, then add</p>
+      </li>
+      <li class="reveal">
+        <div class="phone shot"><img src="assets/shots/android-driving-days.jpg" width="540" height="1200" alt="Trip story with driving days on a map" loading="lazy" decoding="async"></div>
+        <p>On the trip map</p>
+      </li>
+      <li class="reveal">
+        <div class="phone shot"><img src="assets/shots/android-drivers-log.jpg" width="540" height="1200" alt="Driver's Log with miles driven this year" loading="lazy" decoding="async"></div>
+        <p>Driver's Log</p>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<section class="section extras extras-alt" id="photos" aria-labelledby="photos-title">
+  <div class="wrap">
+    <p class="eyebrow reveal">Photos</p>
+    <h2 id="photos-title" class="reveal">Trip photos stay on the phone.</h2>
+    <p class="muted reveal feature-copy">Trippy suggests photos by date and place. Full images stay on the device; only a small thumbnail reaches your own server.</p>
+    <ul class="shot-band">
+      <li class="reveal">
+        <div class="phone shot"><img src="assets/shots/android-photo-suggestions.jpg" width="540" height="1200" alt="Photo suggestions for a trip, with keep or skip on each thumbnail" loading="lazy" decoding="async"></div>
+        <p>Suggested by date</p>
+      </li>
+      <li class="reveal">
+        <div class="phone shot"><img src="assets/shots/android-photo-gallery.jpg" width="540" height="1200" alt="Trip photo gallery of kept thumbnails" loading="lazy" decoding="async"></div>
+        <p>On the trip</p>
+      </li>
+      <li class="reveal">
+        <div class="phone shot"><img src="assets/shots/android-share-photo.jpg" width="540" height="1200" alt="Share sheet for a trip photo thumbnail" loading="lazy" decoding="async"></div>
+        <p>Share a still</p>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<section class="section extras" id="android" aria-labelledby="android-title">
+  <div class="wrap two-col android-block">
+    <div>
+      <p class="eyebrow reveal">Android</p>
+      <h2 id="android-title" class="reveal">The same trips, on Android.</h2>
+      <p class="muted reveal">Import files, drives, photos and a Driver's Log on a phone you already carry. Install from GitHub Releases. To reach a server on your home network, the app asks for Nearby devices access.</p>
+      <div class="cta reveal">
+        <a class="btn btn-primary" href="https://github.com/sakethramanujam/trippy-android/releases/latest">Download Android</a>
+        <a class="btn btn-ghost" href="https://github.com/sakethramanujam/trippy-android">Source</a>
+      </div>
+    </div>
+    <div class="card reveal host-pitch" id="host-pitch">
+      <p class="eyebrow">Self-host it</p>
+      <h3>Your box, your database.</h3>
+      <p>A small FastAPI server and SQLite. Docker Compose, or the five-minute steps below. Setup notes live in the repo README.</p>
+      <p class="host-links"><a href="https://github.com/sakethramanujam/trippy#readme">README</a> · <a href="#self-host">Self-host in 5 minutes</a></p>
+    </div>
+  </div>
+</section>
+
 <section class="section privacy" aria-labelledby="why-title">
   <div class="wrap two-col">
     <div>
@@ -182,7 +247,7 @@ curl http://127.0.0.1:8000/health</code></pre></div>
       </div>
       <div class="step reveal">
         <h3><span class="num">2</span> Build the iOS app</h3>
-        <p class="muted">There is no App Store release. Install it on your iPhone by building with Xcode (iOS 17 or later) and <a href="https://github.com/yonaskolb/XcodeGen">XcodeGen</a>.</p>
+        <p class="muted">There is no App Store release. Install on iPhone with Xcode (iOS 17+) and <a href="https://github.com/yonaskolb/XcodeGen">XcodeGen</a>, or grab the <a href="https://github.com/sakethramanujam/trippy-android/releases/latest">Android build</a>.</p>
         <div class="code"><button class="copy" type="button" data-copy="ios">Copy</button>
 <pre id="ios"><code>brew install xcodegen
 cp ios-xcode/Local.xcconfig.example ios-xcode/Local.xcconfig
