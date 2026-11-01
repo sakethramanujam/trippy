@@ -247,3 +247,69 @@ def test_migration_creates_drives(tmp_path):
     c.close()
     alembic(db, "downgrade", "a7c4e2f9b318")
     alembic(db, "upgrade", "head")
+
+
+# --- where drives show up ------------------------------------------------------------------------
+
+def test_story_driving_days_and_miles_without_double_counting(api):
+    me = signup(api, "ana@example.com")
+    trip = make_trip(api, me)
+    api.post("/import/commit", headers=me, json={"items": picked(preview(api, me))})
+    story = api.get(f"/trips/{trip['id']}/story", headers=me).json()
+    days = [i for i in story["items"] if i["kind"] == "drive"]
+    assert [i["key"] for i in days] == ["drive:2024-05-03", "drive:2024-05-04"]
+    d1 = days[0]
+    assert d1["miles"] == 21.2 and d1["metric"] == "21 mi" and d1["paths"][0][0] == [30.2672, -97.7431]
+    assert d1["stops"][0]["name"] == "Cafe" and "1 stop" in d1["subtitle"] and d1["day"] == 2
+    assert story["stats"]["drive_miles"] == 54 and story["stats"]["drives"] == 2
+    assert any(h["label"] == "Longest drive" for h in story["highlights"])
+    assert any(p.get("city") == "Austin" for p in story["route"])
+    # Hiding a driving day sticks like any other story item.
+    api.put(f"/trips/{trip['id']}/story", headers=me, json={"items": {"drive:2024-05-03": {"hidden": True}}})
+    again = api.get(f"/trips/{trip['id']}/story", headers=me).json()
+    assert next(i for i in again["items"] if i["key"] == "drive:2024-05-03")["hidden"] is True
+
+    # A rental with odometer miles over the same days: its miles count, the drives inside it don't.
+    api.post(f"/trips/{trip['id']}/rental_cars/", headers=me, json={
+        "rental_company": "Example Rent-a-Car", "pickup_location": "AUS", "dropoff_location": "AUS",
+        "pickup_time": "2024-05-03T07:30", "dropoff_time": "2024-05-04T10:00", "mileage_driven": 60})
+    st = api.get(f"/trips/{trip['id']}/story", headers=me).json()["stats"]
+    assert st["drive_miles"] == 60 and st["timeline_miles"] == 54
+
+
+def test_other_travelers_dont_see_your_drives_in_the_story(api, db):
+    from app import models
+    ana, ben = signup(api, "ana@example.com"), signup(api, "ben@example.com")
+    trip = make_trip(api, ana)
+    t = db.get(models.Trip, trip["id"])
+    t.participants.append(db.query(models.User).filter_by(email="ben@example.com").one())
+    db.commit()
+    api.post("/import/commit", headers=ana, json={"items": picked(preview(api, ana))})
+    ben_story = api.get(f"/trips/{trip['id']}/story", headers=ben).json()
+    assert not [i for i in ben_story["items"] if i["kind"] == "drive"]
+    assert api.get(f"/trips/{trip['id']}/story", headers=ana).json()["stats"]["drives"] == 2
+
+
+def test_year_in_travel_adds_timeline_miles(api):
+    me = signup(api, "ana@example.com")
+    api.post("/import/commit", headers=me, json={"items": picked(preview(api, me, drives_scope="all"), False)})
+    y = api.get("/stories/year?year=2024", headers=me).json()
+    assert y["drives"] == 3 and y["timeline_drive_miles"] == 66 and y["drive_miles"] == 66 and y["miles"] == 66
+
+
+def test_journey_shows_driving_days_including_between_legs(api):
+    me = signup(api, "ana@example.com")
+    a = make_trip(api, me, "Austin", "2024-04-30T00:00", "2024-05-02T00:00")
+    b = make_trip(api, me, "Bay Area", "2024-08-19T00:00", "2024-08-21T00:00")
+    j = api.post("/journeys/", headers=me, json={"title": "2024", "trip_ids": [a["id"], b["id"]]}).json()
+    body = preview(api, me)
+    assert len(body["items"]) == 3  # May 3 is a day after Austin (still matched); May 4 is only in the journey
+    assert body["items"][1]["match"] == {"trip_id": None, "trip_title": None, "journey_id": j["id"], "journey_title": "2024"}
+    api.post("/import/commit", headers=me, json={"items": picked(body)})
+    d = api.get(f"/journeys/{j['id']}", headers=me).json()
+    assert [i["key"] for i in d["drives"]] == ["drive:2024-05-03", "drive:2024-05-04", "drive:2024-08-20"]
+    between = next(i for i in d["timeline"] if i["key"] == "drive:2024-05-04")
+    assert between["leg"] is None and between["paths"]
+    assert d["stats"]["drive_miles"] == 66
+    s = api.get(f"/journeys/{j['id']}/story", headers=me).json()
+    assert len([i for i in s["items"] if i["kind"] == "drive"]) == 3 and s["stats"]["drive_miles"] == 66

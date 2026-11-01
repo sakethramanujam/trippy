@@ -21,11 +21,11 @@ from typing import Any, Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from . import access, airports, models, money, stories
+from . import access, airports, drives, models, money, stories
 
 NEAR_MILES = 60          # two places this close count as the same place (SJC ~ Fremont)
 MAX_GAP_DAYS = 2         # back-to-back: the next trip starts within this many calendar days
-KIND_ORDER = {"travelers": -1, "flight": 0, "rental": 1, "lodging": 2, "expenses": 3}
+KIND_ORDER = {"travelers": -1, **stories.KIND_SORT}
 
 
 # --- access ---------------------------------------------------------------------------------
@@ -285,6 +285,13 @@ def ledger(db: Session, trips: list[models.Trip]) -> dict:
     return money._ledger(db, edges, list(dict.fromkeys(people)), expenses, settlements)
 
 
+def _between_drives(db: Session, j: models.Journey, user: models.User) -> list[dict]:
+    """Your Timeline drives on this journey that aren't on one of its trips (the days between legs)."""
+    rows = drives.own(db, user).filter(models.Drive.journey_id == j.id, models.Drive.trip_id.is_(None)) \
+        .order_by(models.Drive.start_time).all()
+    return stories.drive_items(drives.driving_days(rows))
+
+
 def detail(db: Session, j: models.Journey, user: models.User) -> dict:
     trips = ordered_trips(j, user)
     legs = [_leg(db, t, user) for t in trips]
@@ -293,6 +300,13 @@ def detail(db: Session, j: models.Journey, user: models.User) -> dict:
     for n, (t, leg) in enumerate(zip(trips, legs), start=1):
         for i in leg["items"]:
             timeline.append({**i, "trip_id": t.id, "leg": n, "trip_title": leg["title"]})
+    between = _between_drives(db, j, user)
+    if between:
+        timeline += [{**i, "trip_id": None, "leg": None, "trip_title": None} for i in between]
+        timeline.sort(key=lambda i: (i["date"] or "9999", KIND_ORDER.get(i["kind"], 9)))
+        extra = round(sum(i["miles"] or 0 for i in between))
+        out["stats"]["drive_miles"] = (out["stats"].get("drive_miles") or 0) + extra
+        out["stats"]["miles"] = (out["stats"].get("miles") or 0) + extra
     people: dict[int, dict] = {}
     for leg in legs:
         for p in leg["travelers"]:
@@ -302,6 +316,7 @@ def detail(db: Session, j: models.Journey, user: models.User) -> dict:
                  | {"leg": n, "item_count": len(l["items"])} for n, l in enumerate(legs, start=1)],
         "timeline": timeline,
         "route": _route_join(legs),
+        "drives": [i for i in timeline if i["kind"] == "drive"],  # driving days with paths, for the map
         "travelers": list(people.values()),
         "balances": ledger(db, trips),
     })
@@ -320,6 +335,9 @@ def story(db: Session, j: models.Journey, user: models.User) -> dict:
             travelers.setdefault(p["id"], p)
         items += [i for i in g["items"] if i["kind"] != "travelers"]
         highlights += g["highlights"]
+    between = [{**i, "hidden": False, "note": None, "photos": [], "day": None}
+               for i in _between_drives(db, j, user)]
+    items += between
     dated = sorted([i for i in items if i["date"]], key=lambda i: (i["date"], KIND_ORDER.get(i["kind"], 9)))
     undated = [i for i in items if not i["date"]]
     s = summary(db, j, user)
@@ -363,7 +381,9 @@ def story(db: Session, j: models.Journey, user: models.User) -> dict:
         "stats": {
             "days": st["days"], "places": len(cities), "countries": st["countries"], "flights": st["flights"],
             "rentals": st["rentals"], "stays": st["stays"], "nights": st["nights"],
-            "flight_miles": st["flight_miles"], "drive_miles": st["drive_miles"], "distance_miles": st["miles"],
+            "flight_miles": st["flight_miles"],
+            "drive_miles": st["drive_miles"] + round(sum(i["miles"] or 0 for i in between)),
+            "distance_miles": st["miles"] + round(sum(i["miles"] or 0 for i in between)),
             "travelers": len(travelers), "spend": {k: round(v, 2) for k, v in spend.items()},
             "stay_spend": {k: round(v, 2) for k, v in stay_spend.items()},
             "spend_text": " + ".join(stories._money(v, c) for c, v in spend.most_common()) if spend else None,

@@ -145,6 +145,16 @@ POST   /drives/{id}/rental/dismiss  { "rental_id": 5 }
 
 Rental matches are suggestions only: nothing is linked until you accept one.
 
+Where drives show up (only for you):
+
+- **Trip timeline and story**: one `kind: "drive"` item per driving day (key `drive:YYYY-MM-DD`) with
+  `paths` (one polyline per drive), `stops` and `drive_ids`. Hide it or add a note like any story item.
+- **Journeys**: drives on the journey's trips appear in their leg; drives on the journey's dates but between
+  trips appear in the timeline with `leg: null`. `GET /journeys/{id}` has `drives` (all driving days, for the map).
+- **Driver's Log miles** (`drive_miles` in trip, journey and year stats): a rental's recorded miles win; drives
+  linked to that rental, or inside its pickup–dropoff window, aren't added again. Story stats also carry
+  `drives` and `timeline_miles`; year in travel carries `drives` and `timeline_drive_miles`.
+
 ## Not supported (and why)
 
 - **TripIt API / OAuth**: closed to new developers. Use the calendar feed.

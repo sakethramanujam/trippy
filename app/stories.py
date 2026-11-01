@@ -15,6 +15,7 @@ from typing import Any, Iterable, Optional
 from sqlalchemy.orm import Session
 
 from . import access, airports, models
+from . import drives as drives_mod
 
 MAX_NOTE = 280
 MAX_TITLE = 80
@@ -110,6 +111,38 @@ def trip_rentals(db: Session, trip: models.Trip, user: models.User) -> list[mode
     return sorted(by_id.values(), key=lambda r: r.pickup_time or datetime.max)
 
 
+def _hm(minutes: int) -> Optional[str]:
+    if not minutes:
+        return None
+    h, m = divmod(int(minutes), 60)
+    return f"{h}h {m:02d}m" if h else f"{m}m"
+
+
+def drive_items(day_rows: list[dict]) -> list[dict[str, Any]]:
+    """Story/timeline entries for Timeline drives: one "Driving day" per day, with each drive's path."""
+    out = []
+    for d in day_rows:
+        a, b = d["from_name"], d["to_name"]
+        title = f"{a} → {b}" if a and b and a != b else "Driving day"
+        n, stops = d["drives"], len(d["stops"])
+        sub = ["Driving day" if title != "Driving day" else None,
+               f"{n} drives" if n > 1 else None, _hm(d["minutes"]),
+               f"{stops} stop{'s' if stops != 1 else ''}" if stops else None]
+        out.append({
+            "key": f"drive:{d['date'].isoformat()}", "kind": "drive",
+            "date": _iso(d["start"]), "end_date": _iso(d["end"]),
+            "title": title, "subtitle": " · ".join(x for x in sub if x) or None,
+            "place": d["place"], "from_place": d["from_place"], "to_place": None,
+            "metric": f"{d['miles']:,.0f} mi" if d["miles"] >= 1 else f"{d['miles']:.1f} mi",
+            "miles": round(d["miles"], 1), "brand": None, "code": None,
+            "paths": d["paths"], "stops": d["stops"], "drive_ids": d["drive_ids"],
+        })
+    return out
+
+
+KIND_SORT = {"flight": 0, "rental": 1, "drive": 2, "lodging": 3, "expenses": 4}
+
+
 def generate(db: Session, trip: models.Trip, user: models.User) -> dict[str, Any]:
     """The unedited story: chronological items, places, route and stats."""
     items: list[dict[str, Any]] = []
@@ -160,6 +193,14 @@ def generate(db: Session, trip: models.Trip, user: models.User) -> dict[str, Any
             "metric": f"{miles:,.0f} mi driven" if miles else None, "miles": miles,
             "brand": r.rental_company, "code": r.license_plate,
         })
+
+    # Your Timeline drives (private to you). Miles a rental already recorded aren't counted twice.
+    tdrives = drives_mod.trip_drives(db, trip, user)
+    timeline_miles = sum(d.distance_miles or 0 for d in tdrives)
+    drive_miles += drives_mod.counted_miles(tdrives, rentals)
+    day_rows = drives_mod.driving_days(tdrives)
+    items += drive_items(day_rows)
+    longest_day = max(day_rows, key=lambda d: d["miles"], default=None)
 
     nights_total = 0
     stays = [h for h in trip.lodgings if (h.status or "").lower() != "cancelled"]
@@ -219,7 +260,7 @@ def generate(db: Session, trip: models.Trip, user: models.User) -> dict[str, Any
 
     dated = [i for i in items if i["date"]]
     undated = [i for i in items if not i["date"]]
-    dated.sort(key=lambda i: (i["date"], {"flight": 0, "rental": 1, "lodging": 2, "expenses": 3}[i["kind"]]))
+    dated.sort(key=lambda i: (i["date"], KIND_SORT[i["kind"]]))
     start = trip.start_date or (datetime.fromisoformat(dated[0]["date"]) if dated else None)
     end = trip.end_date or (datetime.fromisoformat(max(i["end_date"] or i["date"] for i in dated)) if dated else None)
     if start and end and end < start:
@@ -263,6 +304,10 @@ def generate(db: Session, trip: models.Trip, user: models.User) -> dict[str, Any
         m, r = longest_drive
         highlights.append({"icon": "car.fill", "label": "Longest drive",
                            "value": f"{m:,.0f} mi", "detail": f"{r.rental_company}"})
+    elif longest_day and longest_day["miles"] >= 20:
+        highlights.append({"icon": "car.fill", "label": "Longest drive",
+                           "value": f"{longest_day['miles']:,.0f} mi",
+                           "detail": longest_day["date"].strftime("%b %-d")})
     if home and route:
         far = max(route, key=lambda p: airports.haversine_miles(home[2], home[3], p["lat"], p["lng"]))
         d = airports.haversine_miles(home[2], home[3], far["lat"], far["lng"])
@@ -287,6 +332,7 @@ def generate(db: Session, trip: models.Trip, user: models.User) -> dict[str, Any
             "flights": len(trip.flights), "rentals": len(rentals), "stays": len(stays),
             "nights": nights_total, "flight_miles": round(flight_miles), "drive_miles": round(drive_miles),
             "distance_miles": round(flight_miles + drive_miles), "travelers": len(people),
+            "drives": len(tdrives), "timeline_miles": round(timeline_miles),
             "spend": {k: round(v, 2) for k, v in spend.items()},
             "stay_spend": {k: round(v, 2) for k, v in stay_spend.items()},
             "spend_text": " + ".join(_money(v, c) for c, v in spend.most_common()) if spend else None,
@@ -462,6 +508,11 @@ def year_in_travel(db: Session, user: models.User, year: int) -> dict[str, Any]:
                 if p["city"] in points:
                     points[p["city"]]["visits"] += 1
 
+    year_drives = drives_mod.own(db, user).filter(models.Drive.start_time >= datetime(year, 1, 1),
+                                                  models.Drive.start_time < datetime(year + 1, 1, 1)).all()
+    timeline_miles = drives_mod.counted_miles(year_drives, rentals)
+    drive_miles += timeline_miles
+
     cities = {c for c in points if c}
     countries = {p["country"] for p in points.values() if p.get("country")}
     longest = max(trips, key=lambda x: ((x[2] or x[1]) - x[1]).days, default=None)
@@ -476,6 +527,8 @@ def year_in_travel(db: Session, user: models.User, year: int) -> dict[str, Any]:
         "country_codes": sorted(countries),
         "flight_miles": round(flight_miles),
         "drive_miles": round(drive_miles),
+        "timeline_drive_miles": round(timeline_miles),  # part of drive_miles: Timeline drives outside rentals
+        "drives": len(year_drives),
         "miles": round(flight_miles + drive_miles),
         "around_earth": round((flight_miles + drive_miles) / 24901, 2),
         "top_destinations": [{"city": c, "visits": n} for c, n in visits.most_common(5)],
