@@ -201,3 +201,57 @@ def test_pdf_receipts_never_use_the_client_filename_as_a_path(monkeypatch):
     monkeypatch.setattr(receipts_engine, "pdf_to_text", lambda path: seen.append(path) or "")
     receipts_engine.extract_candidates(b"%PDF-1.4", filename="/etc/passwd.pdf")
     assert seen and seen[0] != "/etc/passwd.pdf" and seen[0].endswith(".pdf")
+
+
+def test_stats_do_not_leak_across_users(api):
+    ana = bearer(signup(api, email="ana-stats@example.com", name="Ana"))
+    ben = bearer(signup(api, email="ben-stats@example.com", name="Ben"))
+
+    trip = api.post("/trips/", json={
+        "title": "Ana Secret Trip",
+        "start_date": "2026-05-01T00:00:00",
+        "end_date": "2026-05-05T00:00:00",
+    }, headers=ana).json()
+    api.post(f"/trips/{trip['id']}/flights/", json={
+        "airline": "United Airlines",
+        "flight_number": "UA 100",
+        "departure_airport": "SFO",
+        "arrival_airport": "NRT",
+        "departure_time": "2026-05-01T10:00:00",
+        "arrival_time": "2026-05-02T14:00:00",
+        "aircraft_model": "Boeing 777-300ER",
+    }, headers=ana)
+    api.post("/rental_cars/", json={
+        "rental_company": "Hertz",
+        "car_model": "Porsche 911",
+        "vehicle_class": "Luxury",
+        "pickup_location": "NRT",
+        "dropoff_location": "NRT",
+        "pickup_time": "2026-05-02T15:00:00",
+        "dropoff_time": "2026-05-05T10:00:00",
+        "trip_id": trip["id"],
+    }, headers=ana)
+
+    ben_stats = api.get("/stats/", headers=ben).json()
+    assert ben_stats["total_trips"] == 0
+    assert ben_stats["top_airlines"] == []
+    assert ben_stats["top_aircraft"] == []
+    assert ben_stats["top_cars"] == []
+    assert ben_stats["top_rental_companies"] == []
+    assert ben_stats["flights"]["top_airlines"] == []
+    assert ben_stats["flights"]["top_aircraft"] == []
+    assert ben_stats["rentals"]["top_cars"] == []
+    assert ben_stats["rentals"]["top_rental_companies"] == []
+    assert ben_stats["rentals"]["top_vehicle_classes"] == []
+
+    ben_2026 = api.get("/stats/?year=2026", headers=ben).json()
+    assert ben_2026["total_trips"] == 0
+
+    ana_stats = api.get("/stats/", headers=ana).json()
+    assert ana_stats["total_trips"] == 1
+    assert ana_stats["top_airlines"] == [{"name": "United Airlines", "count": 1}]
+    assert ana_stats["top_aircraft"] == [{"name": "Boeing 777-300ER", "count": 1}]
+    assert ana_stats["top_cars"] == [{"name": "Porsche 911", "count": 1}]
+    assert ana_stats["top_rental_companies"] == [{"name": "Hertz", "count": 1}]
+    assert ana_stats["rentals"]["top_vehicle_classes"] == [{"name": "Luxury", "count": 1}]
+

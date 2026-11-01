@@ -144,6 +144,7 @@ def get_trip_stats(db: Session, year: Optional[int] = None, user: Optional[model
     rq = access.rentals(db, user) if user else db.query(models.RentalCar)
     eq = access.expenses(db, user) if user else db.query(models.Expense)
     lq = access.lodgings(db, user) if user else db.query(models.Lodging)
+    tq = access.trips(db, user) if user else db.query(models.Trip).filter(models.Trip.deleted_at.is_(None))
     stays = [h for h in _apply_year(lq, models.Lodging.check_in, year).all() if not is_cancelled(h)]
     flights = _apply_year(fq, models.Flight.departure_time, year).all()
     rentals = _apply_year(rq, models.RentalCar.pickup_time, year).all()
@@ -172,7 +173,7 @@ def get_trip_stats(db: Session, year: Optional[int] = None, user: Optional[model
 
     top_aircraft = _top_counts(
         _apply_year(
-            db.query(models.Flight.aircraft_model, func.count(models.Flight.id)),
+            fq.with_entities(models.Flight.aircraft_model, func.count(models.Flight.id)),
             models.Flight.departure_time,
             year,
         ),
@@ -180,7 +181,7 @@ def get_trip_stats(db: Session, year: Optional[int] = None, user: Optional[model
     )
     top_airlines = _top_counts(
         _apply_year(
-            db.query(models.Flight.airline, func.count(models.Flight.id)),
+            fq.with_entities(models.Flight.airline, func.count(models.Flight.id)),
             models.Flight.departure_time,
             year,
         ),
@@ -213,7 +214,7 @@ def get_trip_stats(db: Session, year: Optional[int] = None, user: Optional[model
 
     top_cars = _top_counts(
         _apply_year(
-            db.query(models.RentalCar.car_model, func.count(models.RentalCar.id)),
+            rq.with_entities(models.RentalCar.car_model, func.count(models.RentalCar.id)),
             models.RentalCar.pickup_time,
             year,
         ),
@@ -221,7 +222,7 @@ def get_trip_stats(db: Session, year: Optional[int] = None, user: Optional[model
     )
     top_rental_companies = _top_counts(
         _apply_year(
-            db.query(models.RentalCar.rental_company, func.count(models.RentalCar.id)),
+            rq.with_entities(models.RentalCar.rental_company, func.count(models.RentalCar.id)),
             models.RentalCar.pickup_time,
             year,
         ),
@@ -229,7 +230,7 @@ def get_trip_stats(db: Session, year: Optional[int] = None, user: Optional[model
     )
     top_vehicle_classes = _top_counts(
         _apply_year(
-            db.query(models.RentalCar.vehicle_class, func.count(models.RentalCar.id)),
+            rq.with_entities(models.RentalCar.vehicle_class, func.count(models.RentalCar.id)),
             models.RentalCar.pickup_time,
             year,
         ),
@@ -267,10 +268,10 @@ def get_trip_stats(db: Session, year: Optional[int] = None, user: Optional[model
 
     # --- Trips ---
     if year is None:
-        total_trips = db.query(func.count(models.Trip.id)).scalar() or 0
+        total_trips = tq.with_entities(func.count(models.Trip.id)).scalar() or 0
     else:
         trip_ids = ({f.trip_id for f in flights} | {r.trip_id for r in rentals} | {h.trip_id for h in stays}) - {None}
-        for row in _apply_year(db.query(models.Trip.id), models.Trip.start_date, year).all():
+        for row in _apply_year(tq.with_entities(models.Trip.id), models.Trip.start_date, year).all():
             trip_ids.add(row[0])
         total_trips = len(trip_ids)
 
