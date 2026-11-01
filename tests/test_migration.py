@@ -47,3 +47,44 @@ def test_accounts_migration_assigns_legacy_owner(tmp_path):
     alembic(db, "upgrade", "head")  # idempotent
     alembic(db, "downgrade", "b4f1e7c2a9d5")
     alembic(db, "upgrade", "head")
+
+
+def test_per_owner_external_ids_migration_allows_same_external_id_across_users_and_blocks_same_owner(tmp_path):
+    import pytest
+
+    db = tmp_path / "ext.db"
+    alembic(db, "upgrade", "c4f8a2d6e913")
+    c = sqlite3.connect(db)
+    # Simulate an older DB that had a global unique index on rental_cars.external_id and duplicate (owner_id, external_id) rows
+    c.execute("DROP INDEX IF EXISTS ix_rental_cars_external_id")
+    c.execute("CREATE UNIQUE INDEX ix_rental_cars_external_id ON rental_cars (external_id)")
+    c.executemany("INSERT INTO users (id, username, email, hashed_password, is_placeholder, legacy_owner, token_version) VALUES (?,?,?,?,0,0,0)", [
+        (1, "ana", "ana@example.com", "$argon2id$v=19$m=65536,t=3,p=4$fake"),
+        (2, "ben", "ben@example.com", "$argon2id$v=19$m=65536,t=3,p=4$fake"),
+    ])
+    c.executemany("INSERT INTO flights (id, owner_id, airline, flight_number, external_id) VALUES (?,?,?,?,?)", [
+        (1, 1, "UA", "UA 1", "dup-flight"),
+        (2, 1, "UA", "UA 1", "dup-flight"),
+    ])
+    c.commit()
+    c.close()
+
+    alembic(db, "upgrade", "head")
+    c = sqlite3.connect(db)
+    # Two different users can store the exact same external_id on rental_cars, flights, and lodgings
+    c.execute("INSERT INTO rental_cars (owner_id, rental_company, pickup_location, dropoff_location, external_id) VALUES (1, 'Hertz', 'SFO', 'SFO', 'ext-1')")
+    c.execute("INSERT INTO rental_cars (owner_id, rental_company, pickup_location, dropoff_location, external_id) VALUES (2, 'Hertz', 'SFO', 'SFO', 'ext-1')")
+    c.execute("INSERT INTO flights (owner_id, airline, flight_number, external_id) VALUES (2, 'UA', 'UA 1', 'dup-flight')")
+    c.execute("INSERT INTO lodgings (owner_id, name, external_id, time_approx) VALUES (1, 'Hotel A', 'lodg-1', 0)")
+    c.execute("INSERT INTO lodgings (owner_id, name, external_id, time_approx) VALUES (2, 'Hotel A', 'lodg-1', 0)")
+    c.commit()
+
+    # Same owner with the same external_id is rejected by the per-owner unique index
+    with pytest.raises(sqlite3.IntegrityError):
+        c.execute("INSERT INTO rental_cars (owner_id, rental_company, pickup_location, dropoff_location, external_id) VALUES (1, 'Avis', 'LAX', 'LAX', 'ext-1')")
+    with pytest.raises(sqlite3.IntegrityError):
+        c.execute("INSERT INTO flights (owner_id, airline, flight_number, external_id) VALUES (1, 'DL', 'DL 2', 'dup-flight')")
+    with pytest.raises(sqlite3.IntegrityError):
+        c.execute("INSERT INTO lodgings (owner_id, name, external_id, time_approx) VALUES (1, 'Hotel B', 'lodg-1', 0)")
+    c.close()
+

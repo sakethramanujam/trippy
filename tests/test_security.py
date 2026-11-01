@@ -255,3 +255,38 @@ def test_stats_do_not_leak_across_users(api):
     assert ana_stats["top_rental_companies"] == [{"name": "Hertz", "count": 1}]
     assert ana_stats["rentals"]["top_vehicle_classes"] == [{"name": "Luxury", "count": 1}]
 
+
+def test_external_id_is_unique_per_owner_not_globally(api, db):
+    from sqlalchemy.exc import IntegrityError
+
+    ana_t = signup(api, email="ana-ext@example.com", name="Ana")
+    ben_t = signup(api, email="ben-ext@example.com", name="Ben")
+    ana, ben = bearer(ana_t), bearer(ben_t)
+
+    rental_payload = {
+        "rental_company": "Hertz",
+        "pickup_location": "SFO",
+        "dropoff_location": "SFO",
+        "pickup_time": "2026-06-01T10:00:00",
+        "dropoff_time": "2026-06-03T10:00:00",
+    }
+    r1 = api.put("/rental_cars/external/shared-ext-1", json=rental_payload, headers=ana)
+    r2 = api.put("/rental_cars/external/shared-ext-1", json=rental_payload, headers=ben)
+    assert r1.status_code == 200 and r2.status_code == 200
+    assert r1.json()["id"] != r2.json()["id"]
+
+    # Direct duplicate (owner_id, external_id) on Flight, RentalCar, and Lodging is rejected
+    db.add(models.RentalCar(
+        owner_id=ana_t["user"]["id"],
+        external_id="shared-ext-1",
+        rental_company="Avis",
+        pickup_location="LAX",
+        dropoff_location="LAX",
+        pickup_time=datetime(2026, 6, 1, 10, 0),
+        dropoff_time=datetime(2026, 6, 2, 10, 0),
+    ))
+    with pytest.raises(IntegrityError):
+        db.commit()
+    db.rollback()
+
+

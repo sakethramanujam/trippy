@@ -80,6 +80,7 @@ class Trip(Base):
 
 class Flight(Base):
     __tablename__ = "flights"
+    __table_args__ = (Index("uq_flights_owner_external", "owner_id", "external_id", unique=True),)
 
     id = Column(Integer, primary_key=True, index=True)
     trip_id = Column(Integer, ForeignKey("trips.id"))
@@ -164,6 +165,7 @@ class Document(Base):
 
 class RentalCar(Base):
     __tablename__ = "rental_cars"
+    __table_args__ = (Index("uq_rental_cars_owner_external", "owner_id", "external_id", unique=True),)
 
     id = Column(Integer, primary_key=True, index=True)
     trip_id = Column(Integer, ForeignKey("trips.id"))
@@ -257,6 +259,7 @@ class Settlement(Base):
 class Lodging(Base):
     """A hotel or other stay (from imports). trip_id is optional, like rentals."""
     __tablename__ = "lodgings"
+    __table_args__ = (Index("uq_lodgings_owner_external", "owner_id", "external_id", unique=True),)
 
     id = Column(Integer, primary_key=True, index=True)
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
