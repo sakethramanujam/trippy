@@ -383,7 +383,7 @@ def upsert_rental_car(external_id: str, rental_car: schemas.RentalCarCreate, use
 @app.patch("/rental_cars/{rental_id}", response_model=schemas.RentalCar)
 def update_rental_car(rental_id: int, patch: schemas.RentalCarUpdate, user: models.User = Me,
                       db: Session = Depends(get_db)):
-    db_rental = access.rental_or_404(db, rental_id, user)
+    db_rental = access.editable_rental_or_404(db, rental_id, user)
     changes = patch.model_dump(exclude_unset=True)
     if changes.get("trip_id") is not None:
         access.trip_or_404(db, changes["trip_id"], user)
@@ -391,7 +391,7 @@ def update_rental_car(rental_id: int, patch: schemas.RentalCarUpdate, user: mode
 
 @app.delete("/rental_cars/{rental_id}", status_code=204)
 def delete_rental_car(rental_id: int, user: models.User = Me, db: Session = Depends(get_db)):
-    crud.delete_rental_car(db, access.rental_or_404(db, rental_id, user))
+    crud.delete_rental_car(db, access.editable_rental_or_404(db, rental_id, user))
 
 # --- Stays (hotels / rental homes) ---
 
@@ -439,7 +439,7 @@ def upsert_lodging(external_id: str, lodging: schemas.LodgingCreate, user: model
 @app.patch("/lodgings/{lodging_id}", response_model=schemas.Lodging)
 def update_lodging(lodging_id: int, patch: schemas.LodgingUpdate, user: models.User = Me,
                    db: Session = Depends(get_db)):
-    row = access.lodging_or_404(db, lodging_id, user)
+    row = access.editable_lodging_or_404(db, lodging_id, user)
     changes = patch.model_dump(exclude_unset=True)
     if changes.get("trip_id") is not None:
         access.trip_or_404(db, changes["trip_id"], user)
@@ -447,7 +447,7 @@ def update_lodging(lodging_id: int, patch: schemas.LodgingUpdate, user: models.U
 
 @app.delete("/lodgings/{lodging_id}", status_code=204)
 def delete_lodging(lodging_id: int, user: models.User = Me, db: Session = Depends(get_db)):
-    crud.delete_lodging(db, access.lodging_or_404(db, lodging_id, user))
+    crud.delete_lodging(db, access.editable_lodging_or_404(db, lodging_id, user))
 
 # --- Travelers and invites ---
 

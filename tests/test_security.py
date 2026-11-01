@@ -290,3 +290,61 @@ def test_external_id_is_unique_per_owner_not_globally(api, db):
     db.rollback()
 
 
+def test_shared_trip_participant_cannot_edit_or_delete_others_bookings_or_group_links(api):
+    ana_t = signup(api, email="ana-m1@example.com", name="Ana")
+    ben_t = signup(api, email="ben-m1@example.com", name="Ben")
+    cal_t = signup(api, email="cal-m1@example.com", name="Cal")
+    ana, ben, cal = bearer(ana_t), bearer(ben_t), bearer(cal_t)
+
+    trip, cy = _placeholder_trip(api, ana, email="ben-m1-invite@example.com")
+    code = api.post(f"/trips/{trip['id']}/travelers/{cy['id']}/invite-code", headers=ana).json()["code"]
+    assert api.post("/invites/redeem", json={"code": code}, headers=ben).status_code == 200
+
+    rental = api.post("/rental_cars/", json={
+        "rental_company": "Sixt",
+        "pickup_location": "ZRH",
+        "dropoff_location": "ZRH",
+        "pickup_time": "2026-07-01T10:00:00",
+        "dropoff_time": "2026-07-05T10:00:00",
+        "trip_id": trip["id"],
+    }, headers=ana).json()
+    stay = api.post(f"/trips/{trip['id']}/lodgings/", json={
+        "name": "Hotel Baur au Lac",
+        "check_in": "2026-07-01T15:00:00",
+        "check_out": "2026-07-05T11:00:00",
+    }, headers=ana).json()
+
+    # Ben (participant, not owner) can read them, but cannot PATCH or DELETE Ana's rental or stay
+    assert api.get(f"/rental_cars/{rental['id']}", headers=ben).status_code == 200
+    assert api.patch(f"/rental_cars/{rental['id']}", json={"notes": "hijacked"}, headers=ben).status_code == 403
+    assert api.delete(f"/rental_cars/{rental['id']}", headers=ben).status_code == 403
+    assert api.get(f"/lodgings/{stay['id']}", headers=ben).status_code == 200
+    assert api.patch(f"/lodgings/{stay['id']}", json={"notes": "hijacked"}, headers=ben).status_code == 403
+    assert api.delete(f"/lodgings/{stay['id']}", headers=ben).status_code == 403
+
+    # Ben CAN create, edit, and delete his own stay on the shared trip, and Ana (trip owner) can also edit it
+    ben_stay = api.post(f"/trips/{trip['id']}/lodgings/", json={
+        "name": "Ben Hostel",
+        "check_in": "2026-07-01T15:00:00",
+        "check_out": "2026-07-02T11:00:00",
+    }, headers=ben).json()
+    assert api.patch(f"/lodgings/{ben_stay['id']}", json={"notes": "ben note"}, headers=ben).status_code == 200
+    assert api.patch(f"/lodgings/{ben_stay['id']}", json={"notes": "ana note"}, headers=ana).status_code == 200
+    assert api.delete(f"/lodgings/{ben_stay['id']}", headers=ben).status_code == 204
+
+    # Ben cannot link or unlink Ana's trip to/from a group
+    assert api.post(f"/trips/{trip['id']}/group", json={"name": "Ben Group"}, headers=ben).status_code == 403
+    grp = api.post(f"/trips/{trip['id']}/group", json={"name": "Ana Group"}, headers=ana)
+    assert grp.status_code == 200
+    assert api.put(f"/trips/{trip['id']}/group", json={"group_id": None}, headers=ben).status_code == 403
+    assert api.put(f"/trips/{trip['id']}/group", json={"group_id": None}, headers=ana).status_code == 200
+
+    # Journey ownership is required on GET /drives?journey_id=
+    t2 = api.post("/trips/", json={"title": "Alps Part 2"}, headers=ana).json()
+    journey = api.post("/journeys", json={"title": "Grand Alps", "trip_ids": [trip["id"], t2["id"]]}, headers=ana).json()
+    assert api.get(f"/drives?journey_id={journey['id']}", headers=ana).status_code == 200
+    assert api.get(f"/drives?journey_id={journey['id']}", headers=ben).status_code == 403
+    assert api.get(f"/drives?journey_id={journey['id']}", headers=cal).status_code == 404
+
+
+

@@ -124,10 +124,26 @@ def rental_or_404(db: Session, rental_id: int, user: models.User) -> models.Rent
     return r
 
 
+def editable_rental_or_404(db: Session, rental_id: int, user: models.User) -> models.RentalCar:
+    r = rental_or_404(db, rental_id, user)
+    trip_owner = r.trip.owner_id if r.trip is not None else None
+    if user.id not in (r.owner_id, trip_owner):
+        raise HTTPException(status_code=403, detail="Only its owner or the trip's owner can change that rental")
+    return r
+
+
 def lodging_or_404(db: Session, lodging_id: int, user: models.User) -> models.Lodging:
     h = lodgings(db, user).filter(models.Lodging.id == lodging_id).first()
     if h is None:
         raise HTTPException(status_code=404, detail="Stay not found")
+    return h
+
+
+def editable_lodging_or_404(db: Session, lodging_id: int, user: models.User) -> models.Lodging:
+    h = lodging_or_404(db, lodging_id, user)
+    trip_owner = h.trip.owner_id if h.trip is not None else None
+    if user.id not in (h.owner_id, trip_owner):
+        raise HTTPException(status_code=403, detail="Only its owner or the trip's owner can change that stay")
     return h
 
 

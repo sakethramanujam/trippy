@@ -117,7 +117,7 @@ def undo_settlement(settlement_id: int, me: models.User = Me, db: Session = Depe
 @router.put("/trips/{trip_id}/group", response_model=schemas.Trip)
 def set_trip_group(trip_id: int, body: schemas.TripGroupLink, me: models.User = Me, db: Session = Depends(get_db)):
     """Put a trip in a group (its travelers join the group) or take it out with group_id=null."""
-    trip = _trip(db, trip_id, me)
+    trip = access.owned_trip_or_404(db, trip_id, me)
     if body.group_id is None:
         trip.group_id = None
     else:
@@ -130,7 +130,7 @@ def set_trip_group(trip_id: int, body: schemas.TripGroupLink, me: models.User = 
 @router.post("/trips/{trip_id}/group", response_model=schemas.Group)
 def group_from_trip(trip_id: int, body: schemas.GroupFromTrip, me: models.User = Me, db: Session = Depends(get_db)):
     """Create a group from this trip's travelers and link the trip to it."""
-    g = money.group_from_trip(db, _trip(db, trip_id, me), body.name)
+    g = money.group_from_trip(db, access.owned_trip_or_404(db, trip_id, me), body.name)
     g.owner_id = me.id
     if me not in g.members:
         g.members.append(me)

@@ -7,7 +7,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from . import access, drives, models, schemas
+from . import access, drives, journeys, models, schemas
 from .auth import get_current_user
 from .database import get_db
 
@@ -22,8 +22,10 @@ def list_drives(trip_id: Optional[int] = None, journey_id: Optional[int] = None,
                 db: Session = Db, me: models.User = Me):
     q = drives.own(db, me)
     if trip_id is not None:
+        access.trip_or_404(db, trip_id, me)
         q = q.filter(models.Drive.trip_id == trip_id)
     if journey_id is not None:
+        journeys.owned_journey_or_404(db, journey_id, me)
         trip_ids = [t.id for t in db.query(models.Trip).filter(models.Trip.journey_id == journey_id).all()]
         q = q.filter((models.Drive.journey_id == journey_id) | (models.Drive.trip_id.in_(trip_ids or [-1])))
     if year is not None:
