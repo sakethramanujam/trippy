@@ -185,6 +185,29 @@ def test_unknown_token_and_strangers_are_ignored(db, users, on):
     assert db.query(models.InboundEmail).count() == 0
 
 
+def test_auth_results_forgery_and_substring_domain_rejected(db, users, on, monkeypatch):
+    ana, ben, _ = users
+    # 1. Substring domain attack: sender is user@t.local, but spf=pass is for nott.local -> must be rejected
+    spoof_sub = "mx.example.net; spf=pass smtp.mailfrom=evil@nott.local"
+    assert inbound.receive(db, mail(sender="ben@t.local", mid="<f-sub@x>", auth=spoof_sub)) is None
+
+    # 2. Forged bottom Authentication-Results header when topmost MX header says spf=fail / none
+    raw_two_headers = (
+        b"Authentication-Results: mx.example.net; spf=fail smtp.mailfrom=t.local\r\n"
+        b"Authentication-Results: attacker.evil; dmarc=pass header.from=t.local\r\n"
+        + mail(sender="ben@t.local", mid="<f-two@x>")
+    )
+    assert inbound.receive(db, raw_two_headers) is None
+
+    # 3. dmarc=pass for a different header.from domain must not authenticate ben@t.local
+    wrong_dmarc = "mx.example.net; dmarc=pass header.from=other.org"
+    assert inbound.receive(db, mail(sender="ben@t.local", mid="<f-dmarc@x>", auth=wrong_dmarc)) is None
+
+    # 4. In direct SMTP mode, sender-match is disabled by default even if attacker supplies Authentication-Results
+    monkeypatch.setenv("TRIPPY_INBOUND_MODE", "smtp")
+    assert inbound.receive(db, mail(sender="ben@t.local", mid="<f-smtp@x>", auth=AUTH_PASS)) is None
+
+
 def test_delivered_to_header_routes(db, users, on):
     raw = mail(to="list@example.org", mid="<d1@x>")
     raw = f"Delivered-To: {addr(db, users[1])}\r\n".encode() + raw

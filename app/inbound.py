@@ -102,6 +102,8 @@ def max_per_hour() -> int:
 
 
 def sender_match() -> bool:
+    if mode() == "smtp" and not _on("SMTP_TRUST_AUTH_HEADERS", False):
+        return False
     return _on("SENDER_MATCH", True)
 
 
@@ -177,16 +179,28 @@ def _addresses(msg, *headers: str) -> list[str]:
 
 def _authenticated(msg, sender: str) -> bool:
     """The receiving provider vouches for the From domain (SPF, DKIM or DMARC pass)."""
-    results = " ".join(str(v) for v in (msg.get_all("Authentication-Results") or [])).lower()
+    headers = msg.get_all("Authentication-Results") or []
+    if not headers:
+        return False
+    # Only trust the topmost Authentication-Results header (added by our immediate MX / IMAP provider).
+    results = str(headers[0]).lower()
     if not results:
         return False
     if re.search(r"\bdmarc=(fail|reject|quarantine)", results):
         return False
-    domain = sender.rsplit("@", 1)[-1]
-    if re.search(r"\bdmarc=pass\b", results):
-        return True
+    domain = sender.rsplit("@", 1)[-1].lower()
+    if not domain:
+        return False
+    dom_pat = r"(?:^|[=@.\s])" + re.escape(domain) + r"(?:$|[;\s)])"
+    for m in re.finditer(r"\bdmarc=pass\b([^;]*)", results):
+        clause = m.group(1)
+        if "header.from=" in clause:
+            if re.search(r"header\.from=(?:[^;\s]*@)?" + re.escape(domain) + r"(?:$|[;\s)])", clause):
+                return True
+        elif re.search(dom_pat, results):
+            return True
     for m in re.finditer(r"\b(spf|dkim)=pass\b([^;]*)", results):
-        if domain in m.group(2):
+        if re.search(dom_pat, m.group(2)):
             return True
     return False
 
