@@ -41,6 +41,8 @@ struct StatsView: View {
                         let s = RentalSummary(rentals)
                         heroCard(s, rentals)
 
+                        DriverLogTimelineSection(network: network, year: selectedYear)
+
                         if s.count > 0 {
                             companiesSection(s)
                             weekdaySection(rentals)

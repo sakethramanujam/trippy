@@ -26,6 +26,8 @@ struct ShareCardSheet: View {
     @State private var loading = true
     @State private var errorText: String?
     @State private var savedToast: String?
+    @State private var backgroundIndex: Int?
+    @State private var backgroundPhoto: UIImage?
 
     var body: some View {
         NavigationStack {
@@ -105,8 +107,41 @@ struct ShareCardSheet: View {
         }
     }
 
+    private var tripPhotos: [ApiTripPhoto] { story?.trip_photos ?? [] }
+
+    /// Pick one of your trip photos as the card's background (or none).
+    private var backgroundPicker: some View {
+        HStack(spacing: 8) {
+            Button {
+                backgroundIndex = nil; backgroundPhoto = nil
+                Task { await prepare() }
+            } label: {
+                Image(systemName: "nosign")
+                    .frame(width: 52, height: 52)
+                    .background(Theme.surface, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .strokeBorder(backgroundIndex == nil ? Theme.stay : .clear, lineWidth: 3))
+                    .foregroundStyle(.white)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("No photo background")
+            TripPhotoStrip(photos: tripPhotos, size: 52, selected: backgroundIndex) { i in
+                backgroundIndex = i
+                Task {
+                    let p = tripPhotos[i]
+                    var img: UIImage?
+                    if p.isOnThisDevice { img = await PhotoLibrary.large(p.asset_id, maxSide: 1600) }
+                    if img == nil { img = await PhotoThumbs.load(p) }
+                    backgroundPhoto = img
+                    await prepare()
+                }
+            }
+        }
+    }
+
     private var controls: some View {
         VStack(spacing: 12) {
+            if kind == .trip && !tripPhotos.isEmpty { backgroundPicker }
             HStack(spacing: 10) {
                 Picker("Format", selection: $format) {
                     ForEach(CardFormat.allCases) { Text($0.label).tag($0) }
@@ -184,7 +219,8 @@ struct ShareCardSheet: View {
         maps.merge(assets) { $1 }
         let image = ShareCardFactory.render(kind: kind, format: format, story: story, year: yearData,
                                             rentals: network.rentals, yearNumber: year, hideMoney: hideMoney,
-                                            name: AuthManager.shared.profile?.name ?? "", maps: maps, stays: yearStays)
+                                            name: AuthManager.shared.profile?.name ?? "", maps: maps, stays: yearStays,
+                                            photo: kind == .trip ? backgroundPhoto : nil)
         withAnimation(.easeOut(duration: 0.2)) { rendered = image }
         fileURL = image.flatMap { CardRenderer.pngFile($0, name: "\(shareTitle)-\(format.rawValue)") }
     }
@@ -249,12 +285,12 @@ enum ShareCardFactory {
 
     static func render(kind: CardKind, format: CardFormat, story: ApiStory?, year: ApiYearInTravel?,
                        rentals: [ApiRentalCar], yearNumber: Int, hideMoney: Bool, name: String,
-                       maps: [String: UIImage], stays: ApiStayStats? = nil) -> UIImage? {
+                       maps: [String: UIImage], stays: ApiStayStats? = nil, photo: UIImage? = nil) -> UIImage? {
         switch kind {
         case .trip:
             guard let story else { return nil }
             let map = maps[key(kind, format, story.theme + story.route.map(\.label).joined())]
-            return CardRenderer.render(TripRecapCard(story: story, map: map, format: format, hideMoney: hideMoney), format: format)
+            return CardRenderer.render(TripRecapCard(story: story, map: map, format: format, hideMoney: hideMoney, photo: photo), format: format)
         case .year:
             guard let year else { return nil }
             return CardRenderer.render(YearInTravelCard(year: year, map: maps[key(kind, format, "\(year.year)")], format: format, name: name, stays: stays), format: format)

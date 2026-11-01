@@ -28,6 +28,9 @@ struct ImportSource: Identifiable, Hashable {
         ImportSource(id: "email", title: "Confirmation email", detail: "Rental car receipts, flights and hotels: an .eml file or pasted text",
                      icon: "envelope.fill", tint: Theme.orange, types: [UTType(filenameExtension: "eml") ?? .emailMessage, .emailMessage, .plainText],
                      acceptsFile: true, acceptsPaste: true, acceptsURL: false),
+        ImportSource(id: "google_timeline", title: "Google Maps Timeline", detail: "Your drives from a Timeline export: the routes, miles and stops on each trip",
+                     icon: "point.topleft.down.to.point.bottomright.curvepath.fill", tint: Theme.teal, types: [.json],
+                     acceptsFile: true, acceptsPaste: false, acceptsURL: false),
         ImportSource(id: "csv", title: "Spreadsheet (CSV)", detail: "Any CSV: you choose which column is which",
                      icon: "tablecells", tint: Theme.purple, types: [.commaSeparatedText, .tabSeparatedText, .plainText],
                      acceptsFile: true, acceptsPaste: false, acceptsURL: false),
@@ -44,12 +47,22 @@ struct ImportItem: Identifiable {
     let duplicate: Bool
     let duplicateInBatch: Bool
     let fields: [String: Any]
+    /// Drives: the trip/journey this drive matched ("trip_title", "journey_title").
+    var match: [String: Any] = [:]
+    var suggested: Bool = true
     var id: Int { index }
+
+    var matchText: String? {
+        if let j = match["journey_title"] as? String { return "Journey: \(j)" }
+        if let t = match["trip_title"] as? String { return "Trip: \(t)" }
+        return kind == "drive" ? "Not during a trip" : nil
+    }
 
     var icon: String {
         switch kind {
         case "flight": return "airplane"
         case "rental": return "car.fill"
+        case "drive": return "steeringwheel"
         default: return "bed.double.fill"
         }
     }
@@ -88,6 +101,7 @@ struct ImportView: View {
     @State private var autoTrip = true
     @State private var tripId: Int?
     @State private var result: (created: Int, skipped: Int)?
+    @State private var drivesScope = "trips"
 
     var body: some View {
         NavigationStack {
@@ -195,6 +209,16 @@ struct ImportView: View {
                     .buttonStyle(PrimaryButtonStyle())
                     .disabled(busy || pasted.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
+            if s.id == "google_timeline" {
+                Picker("Drives", selection: $drivesScope) {
+                    Text("During my trips").tag("trips")
+                    Text("All drives").tag("all")
+                }
+                .pickerStyle(.segmented)
+                Text("On your phone: Settings → Location → Location Services → Timeline → Export Timeline data. From Google Takeout, choose a Semantic Location History month file. Only drives are imported, and they're private to you.")
+                    .type(.caption)
+                    .foregroundStyle(Theme.textTertiary)
+            }
             if busy && !s.acceptsPaste && !s.acceptsURL {
                 HStack { Spacer(); ProgressView().tint(.white); Spacer() }
             }
@@ -256,13 +280,17 @@ struct ImportView: View {
             HStack(spacing: 10) {
                 MetricTile(value: "\(items.count - dupes)", label: "New", systemImage: "sparkles", tint: Theme.green)
                 MetricTile(value: "\(dupes)", label: "In Trippy", systemImage: "checkmark.circle")
-                if let skipped = stats["skipped"] as? Int {
+                if let outside = stats["outside_trips"] as? Int, source?.id == "google_timeline" {
+                    MetricTile(value: "\(outside)", label: drivesScope == "trips" ? "Not on a trip" : "Outside trips", systemImage: "minus.circle")
+                } else if let skipped = stats["skipped"] as? Int {
                     MetricTile(value: "\(skipped)", label: "Not travel", systemImage: "minus.circle")
                 }
             }
             if items.isEmpty {
                 EmptyStateCard(systemImage: "tray", title: "Nothing to import",
-                               message: "Trippy didn't find flights, rental cars or hotel stays in this \(source?.id == "email" ? "email" : "file").")
+                               message: source?.id == "google_timeline"
+                                   ? (drivesScope == "trips" ? "No drives during your trips. Choose All drives to see every drive." : "No drives in this file.")
+                                   : "Trippy didn't find flights, rental cars or hotel stays in this \(source?.id == "email" ? "email" : "file").")
             } else {
                 destinationPicker
                 VStack(spacing: 8) {
@@ -379,6 +407,10 @@ struct ImportView: View {
             error = "Choose a file first."
             return
         }
+        if s.id == "google_timeline" {
+            body["timezone"] = TimeZone.current.identifier
+            body["drives_scope"] = drivesScope
+        }
         if s.id == "csv" {
             body["csv_kind"] = csvKind
             if withMapping, let m = mapping?.mapping { body["mapping"] = m }
@@ -396,7 +428,7 @@ struct ImportView: View {
             }
             items = ((obj["items"] as? [[String: Any]]) ?? []).map(Self.item)
             stats = obj["stats"] as? [String: Any] ?? [:]
-            selected = Set(items.filter { !$0.duplicate && !$0.duplicateInBatch }.map(\.index))
+            selected = Set(items.filter { !$0.duplicate && !$0.duplicateInBatch && $0.suggested }.map(\.index))
             stage = .preview
         } catch {
             self.error = error.localizedDescription
@@ -417,6 +449,7 @@ struct ImportView: View {
             await network.fetchTrips()
             await network.fetchRentals()
             await network.fetchFlights()
+            if source?.id == "google_timeline" { await network.fetchTrips() }
         } catch {
             self.error = error.localizedDescription
         }
@@ -479,7 +512,9 @@ struct ImportView: View {
                    warnings: d["warnings"] as? [String] ?? [],
                    duplicate: !(d["duplicate_of"] is NSNull) && d["duplicate_of"] != nil,
                    duplicateInBatch: !(d["duplicate_in_batch"] is NSNull) && d["duplicate_in_batch"] != nil,
-                   fields: d["fields"] as? [String: Any] ?? [:])
+                   fields: d["fields"] as? [String: Any] ?? [:],
+                   match: d["match"] as? [String: Any] ?? [:],
+                   suggested: d["suggested"] as? Bool ?? true)
     }
 
     private static func mappingInfo(_ obj: [String: Any]) -> CSVMappingInfo {
@@ -551,6 +586,10 @@ private struct ImportItemRow: View {
                         .type(.calloutStrong)
                         .foregroundStyle(isDupe ? Theme.textSecondary : Theme.textPrimary)
                         .multilineTextAlignment(.leading)
+                    if let m = item.matchText {
+                        Label(m, systemImage: item.match["trip_id"] is Int || item.match["journey_id"] is Int ? "suitcase.fill" : "questionmark.circle")
+                            .type(.caption).foregroundStyle(Theme.teal)
+                    }
                     ForEach(item.warnings, id: \.self) { w in
                         Text(w).type(.caption).foregroundStyle(Theme.orange)
                             .multilineTextAlignment(.leading)

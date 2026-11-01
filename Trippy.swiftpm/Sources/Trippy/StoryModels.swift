@@ -29,7 +29,7 @@ struct ApiStoryPerson: Codable, Hashable, Identifiable {
 struct ApiStoryItem: Codable, Hashable, Identifiable {
     var id: String { key }
     let key: String
-    let kind: String              // flight | rental | lodging | expenses | travelers
+    let kind: String              // flight | rental | drive | lodging | expenses | travelers
     let date: String?
     let end_date: String?
     let title: String
@@ -47,6 +47,9 @@ struct ApiStoryItem: Codable, Hashable, Identifiable {
     var hidden: Bool
     var note: String?
     var photos: [String]
+    /// Drive items (Google Maps Timeline): the day's paths, [[[lat, lng]]].
+    let paths: [[[Double]]]?
+    let drive_ids: [Int]?
 
     var start: Date? { Fmt.parse(date) }
 
@@ -54,6 +57,7 @@ struct ApiStoryItem: Codable, Hashable, Identifiable {
         switch kind {
         case "flight": return "airplane"
         case "rental": return "car.fill"
+        case "drive": return "steeringwheel"
         case "lodging": return "bed.double.fill"
         case "expenses": return "creditcard.fill"
         case "travelers": return "person.2.fill"
@@ -65,6 +69,7 @@ struct ApiStoryItem: Codable, Hashable, Identifiable {
         switch kind {
         case "flight": return Theme.route
         case "rental": return Theme.green
+        case "drive": return Theme.teal
         case "lodging": return Theme.stay
         case "expenses": return Theme.teal
         default: return Theme.purple
@@ -75,6 +80,7 @@ struct ApiStoryItem: Codable, Hashable, Identifiable {
         switch kind {
         case "flight": return "FLIGHT"
         case "rental": return "ROAD TRIP"
+        case "drive": return "DRIVE"
         case "lodging": return "STAY"
         case "expenses": return "SPENT"
         case "travelers": return "CREW"
@@ -103,6 +109,8 @@ struct ApiStoryStats: Codable, Hashable {
     let drive_miles: Int
     let distance_miles: Int
     let travelers: Int
+    let drives: Int?
+    let timeline_miles: Int?
     let spend: [String: Double]
     let spend_text: String?
     let cities: [String]
@@ -122,6 +130,8 @@ struct ApiStory: Codable, Hashable {
     var subtitle: String?
     var theme: String
     var cover_photo: String?
+    /// Your trip photos (thumbnails on your server), each placed on a story day/item.
+    let trip_photos: [ApiTripPhoto]?
     let edited: Bool
     let updated_at: String?
 

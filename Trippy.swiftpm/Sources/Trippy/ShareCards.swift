@@ -632,6 +632,8 @@ struct TripRecapCard: View {
     let map: UIImage?
     let format: CardFormat
     var hideMoney = false
+    /// Optional background: one of your trip photos.
+    var photo: UIImage? = nil
 
     private var theme: StoryTheme { story.themeGradient }
 
@@ -662,6 +664,12 @@ struct TripRecapCard: View {
     var body: some View {
         ZStack {
             CardBackground(colors: theme.colors, accent: theme.accent)
+            if let photo {
+                Image(uiImage: photo).resizable().scaledToFill()
+                    .frame(width: format.size.width, height: format.size.height).clipped()
+                LinearGradient(colors: [.black.opacity(0.55), .black.opacity(0.25), .black.opacity(0.85)],
+                               startPoint: .top, endPoint: .bottom)
+            }
             if format == .story { storyLayout } else { squareLayout }
         }
         .frame(width: format.size.width, height: format.size.height)

@@ -364,6 +364,10 @@ struct TripDetailView: View {
 
             if !focusItinerary { itinerary(snap, now: now) }
 
+            TripDrivesSection(network: network, tripId: trip.id)
+
+            TripPhotosSection(network: network, trip: trip, snapshot: snap)
+
             VStack(alignment: .leading, spacing: Theme.s3) {
                 sectionTitle("Good to Know", trailing: nil)
                 GoodToKnowGrid(snapshot: snap)

@@ -317,7 +317,11 @@ private struct StoryItemSlide: View {
     let size: CGSize
     @Binding var map: [String: UIImage]
 
-    private var photos: [UIImage] { item.photos.compactMap(StoryPhotoStore.image) }
+    @State private var tripImages: [UIImage] = []
+    /// Photos added in the story editor, then your trip photos placed on this item.
+    private var photos: [UIImage] { item.photos.compactMap(StoryPhotoStore.image) + tripImages }
+    private var tripPhotos: [ApiTripPhoto] { (story.trip_photos ?? []).filter { $0.item_key == item.key } }
+    private var drivePaths: [[[Double]]] { (item.paths ?? []).filter { $0.count > 1 } }
     private var legStops: [ApiStoryPlace] { [item.from_place, item.place, item.to_place].compactMap { $0 }.filter { $0.coordinate != nil } }
     private var key: String { "leg-\(item.key)-\(story.theme)" }
 
@@ -394,8 +398,16 @@ private struct StoryItemSlide: View {
             .padding(.bottom, 64)
         }
         .frame(width: size.width, height: size.height)
+        .task(id: item.key) {
+            var out: [UIImage] = []
+            for p in tripPhotos.prefix(5) {
+                if p.isOnThisDevice, let big = await PhotoLibrary.large(p.asset_id, maxSide: 1600) { out.append(big) }
+                else if let t = await PhotoThumbs.load(p) { out.append(t) }
+            }
+            tripImages = out
+        }
         .task(id: key) {
-            guard photos.isEmpty, legStops.count > 0, map[key] == nil else { return }
+            guard photos.isEmpty, drivePaths.isEmpty, legStops.count > 0, map[key] == nil else { return }
             let t = story.themeGradient
             let img = await CardMapArt.route(legStops, size: CGSize(width: size.width - 48, height: size.height * 0.36),
                                              tint: UIColor(t.colors[1]), accent: UIColor(t.accent))
@@ -408,7 +420,12 @@ private struct StoryItemSlide: View {
     private var art: some View {
         VStack {
             Spacer().frame(height: 130)
-            if !legStops.isEmpty {
+            if !drivePaths.isEmpty {
+                DrivePathView(paths: drivePaths, tint: item.tint, lineWidth: 4)
+                    .frame(width: size.width - 48, height: size.height * 0.36)
+                    .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(.white.opacity(0.14)))
+            } else if !legStops.isEmpty {
                 ZStack {
                     RoundedRectangle(cornerRadius: 24, style: .continuous).fill(.black.opacity(0.25))
                     if let img = map[key] { Image(uiImage: img).resizable().scaledToFill().transition(.opacity) }
