@@ -95,6 +95,14 @@ def signup_allowlisted(email: str) -> bool:
     return False
 
 
+def first_signup_allowed(email: str) -> bool:
+    """When TRIPPY_SIGNUP_ALLOWLIST is set, even the first account on an empty server must match it."""
+    raw = os.getenv("TRIPPY_SIGNUP_ALLOWLIST", "").strip()
+    if not raw:
+        return True
+    return signup_allowlisted(email)
+
+
 _secret_cache: Optional[str] = None
 
 

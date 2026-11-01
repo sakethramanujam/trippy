@@ -44,7 +44,9 @@ def test_invite_mode_lets_invited_people_join(api, monkeypatch):
 def test_closed_mode_blocks_invited_but_allowlist_wins(api, monkeypatch):
     monkeypatch.setenv("TRIPPY_SIGNUP_MODE", "closed")
     monkeypatch.setenv("TRIPPY_SIGNUP_ALLOWLIST", "@family.example, pal@example.com")
-    assert signup(api, "owner@example.com").status_code == 201
+    # With TRIPPY_SIGNUP_ALLOWLIST set, a non-allowlisted stranger cannot even claim the first account
+    assert signup(api, "scanner@stranger.example").status_code == 403
+    assert signup(api, "owner@family.example").status_code == 201
     assert signup(api, "kid@family.example").status_code == 201
     assert signup(api, "pal@example.com").status_code == 201
     assert signup(api, "other@example.com").status_code == 403

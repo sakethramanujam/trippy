@@ -98,6 +98,8 @@ def signup(body: schemas.SignUp, db: Session = Depends(get_db)):
         claimed.append(f"{len(user.trips) + len(user.participating_trips)} trip(s) you were invited to")
     else:
         has_accounts = db.query(models.User).filter(models.User.is_placeholder.is_(False)).first() is not None
+        if not has_accounts and not auth.first_signup_allowed(email):
+            raise HTTPException(status_code=403, detail="The first account on this server must match TRIPPY_SIGNUP_ALLOWLIST.")
         if has_accounts and mode != "open" and not allowlisted:
             detail = ("This server is invite-only. Ask someone on it to add you to a trip and share an invite code."
                       if mode == "invite" else "Sign-ups are closed on this server.")
