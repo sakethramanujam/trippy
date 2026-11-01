@@ -41,9 +41,11 @@ def test_add_list_thumb_dedupe_and_delete(api):
     assert r.status_code == 201, r.text
     p = r.json()
     assert p["width"] == 320 and p["thumb_url"] == f"/photos/{p['id']}/thumb" and "thumb" not in p
-    # Same asset from the same device replaces, not duplicates.
-    again = api.post(f"/trips/{t['id']}/photos", headers=me, json=body(lat=None))
-    assert again.status_code == 200 and again.json()["id"] == p["id"] and again.json()["lat"] is None
+    # Same asset from the same device replaces, not duplicates; a re-add without GPS keeps the known location.
+    again = api.post(f"/trips/{t['id']}/photos", headers=me, json=body(lat=None, lng=None))
+    assert again.status_code == 200 and again.json()["id"] == p["id"] and again.json()["lat"] == p["lat"] is not None
+    moved = api.post(f"/trips/{t['id']}/photos", headers=me, json=body(lat=10.5, lng=20.25))
+    assert moved.json()["lat"] == 10.5 and moved.json()["lng"] == 20.25
     api.post(f"/trips/{t['id']}/photos", headers=me, json=body("IMG_0002", device_id="dev-b"))
     assert len(api.get(f"/trips/{t['id']}/photos", headers=me).json()) == 2
     assert len(api.get(f"/trips/{t['id']}/photos?device_id=dev-b", headers=me).json()) == 1

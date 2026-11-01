@@ -98,7 +98,13 @@ def add(db: Session, trip: models.Trip, user: models.User, body) -> tuple[models
             raise HTTPException(status_code=409, detail=f"A trip can have up to {MAX_PER_TRIP} photos")
         p = models.TripPhoto(trip_id=trip.id, user_id=user.id, device_id=body.device_id, asset_id=body.asset_id)
         db.add(p)
-    p.taken_at, p.lat, p.lng, p.width, p.height, p.thumb = taken, body.lat, body.lng, w, h, data
+    # A re-add of the same photo can carry less metadata (Android's photo picker strips GPS), so a missing
+    # date or location never erases one the server already has.
+    if created or taken is not None:
+        p.taken_at = taken
+    if created or (body.lat is not None and body.lng is not None):
+        p.lat, p.lng = body.lat, body.lng
+    p.width, p.height, p.thumb = w, h, data
     db.commit()
     db.refresh(p)
     return p, created
