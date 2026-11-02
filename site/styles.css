@@ -228,3 +228,8 @@ code{font-family:var(--mono);font-size:.9em;background:rgba(255,255,255,.06);pad
 .dots{flex-wrap:wrap;padding:0 16px}
 @media (max-width:640px){.dots{gap:2px}.dots button{width:24px;height:24px}}
 .footer a,.muted a,.step p a{text-decoration:underline;text-underline-offset:3px;text-decoration-color:rgba(255,154,126,.5)}
+
+/* car display */
+.car-display{position:relative;border-radius:28px;padding:10px;background:linear-gradient(160deg,#3a3a40,#1b1b1f 40%,#2a2a2f);box-shadow:0 35px 70px -25px rgba(0,0,0,.85),0 0 0 1px rgba(255,255,255,.08) inset;max-width:760px;margin:36px auto 0}
+.car-display img{border-radius:18px;width:100%;height:auto;display:block;aspect-ratio:1000/580;object-fit:cover;background:#0e0e11}
+
