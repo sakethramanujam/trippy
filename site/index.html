@@ -86,7 +86,7 @@
       <li class="card reveal"><span class="ico"><svg viewBox="0 0 24 24"><path d="M6 19a2 2 0 100-.01M18 7a2 2 0 100-.01M6 17V9a4 4 0 014-4h6M18 9v6a4 4 0 01-4 4H8"/></svg></span><h3>Journeys</h3><p>Link several trips, like Lisbon → Madrid, into one route and map.</p></li>
       <li class="card reveal"><span class="ico"><svg viewBox="0 0 24 24"><path d="M12 3v18M17 7H9.5a3 3 0 000 6h5a3 3 0 010 6H6"/></svg></span><h3>Split expenses</h3><p>Add travelers, split equally, by amount, percentage or shares, and settle up.</p></li>
       <li class="card reveal"><span class="ico"><svg viewBox="0 0 24 24"><path d="M4 5a2 2 0 012-2h12a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2zM8 15l3-3 2 2 3-4M8 7h8"/></svg></span><h3>Stories &amp; share cards</h3><p>Trip stories, a year-in-travel recap and cards you can save as images.</p></li>
-      <li class="card reveal"><span class="ico"><svg viewBox="0 0 24 24"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg></span><h3>Android Auto</h3><p>Departure countdown, terminal/gate and 1-tap navigation to airport, hotel or rental from your dash.</p></li>
+      <li class="card reveal"><span class="ico"><svg viewBox="0 0 24 24"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg></span><h3>Android Auto</h3><p>Next flight, hotel or rental with departure time and 1-tap Google Maps navigation right from your car display.</p></li>
       <li class="card reveal"><span class="ico"><svg viewBox="0 0 24 24"><path d="M11 18a7 7 0 100-14 7 7 0 000 14zM21 21l-5-5"/></svg></span><h3>Offline &amp; search</h3><p>Fast offline caching with 3s connect timeout. Search across trips, flights and stays.</p></li>
       <li class="card reveal"><span class="ico"><svg viewBox="0 0 24 24"><path d="M3 6h18v12H3zM3 7l9 6 9-6"/></svg></span><h3>Email-in <small>optional</small></h3><p>Forward a confirmation and Trippy files it. <a href="#import">How import works →</a></p></li>
       <li class="card reveal"><span class="ico"><svg viewBox="0 0 24 24"><path d="M12 13a1 1 0 100-.01M8.5 9.5a5 5 0 000 7M15.5 9.5a5 5 0 010 7M5.5 6.5a9 9 0 000 13M18.5 6.5a9 9 0 010 13"/></svg></span><h3>Live status <small>optional</small></h3><p>Bring your own AeroDataBox, Aviationstack or FlightAware AeroAPI key.</p></li>
@@ -201,9 +201,9 @@
     <div>
       <p class="eyebrow reveal">Android &amp; Android Auto</p>
       <h2 id="android-title" class="reveal">The same trips, on Android and in the car.</h2>
-      <p class="muted reveal">Built with Jetpack Compose and Material 3, with fast offline caching (3s connect timeout) and query-preserving search. In your car, Trippy for Android Auto puts your upcoming flight, hotel, or rental on the dashboard with departure countdowns and 1-tap Google Maps navigation.</p>
+      <p class="muted reveal">Built with Jetpack Compose and Material 3, with fast offline caching (3s connect timeout) and query-preserving search. In your car, Trippy for Android Auto puts your upcoming flight, hotel, or rental on the dashboard with departure times and 1-tap Google Maps navigation.</p>
       <div class="cta reveal">
-        <a class="btn btn-primary" href="https://github.com/sakethramanujam/trippy-android/releases/latest">Download Android (v0.3.0)</a>
+        <a class="btn btn-primary" href="https://github.com/sakethramanujam/trippy-android/releases/latest">Download Android</a>
         <a class="btn btn-ghost" href="https://github.com/sakethramanujam/trippy-android">Source</a>
       </div>
     </div>
@@ -215,14 +215,14 @@
     </div>
   </div>
 
-  <div class="wrap" style="margin-top: 52px;">
+  <div class="wrap car-wrap">
     <div class="car-display reveal">
       <picture>
         <source srcset="assets/shots/android-auto-headunit.webp" type="image/webp">
         <img src="assets/shots/android-auto-headunit.jpg" width="1000" height="580" alt="Trippy on Android Auto showing next flight TAP Air Portugal TP 218 with one-tap navigation to SFO Airport" loading="lazy" decoding="async">
       </picture>
     </div>
-    <p class="muted reveal" style="text-align: center; margin-top: 16px; font-weight: 600; font-size: 14.5px;">Android Auto &middot; Next Stop screen with offline Room cache &middot; 1-tap navigation in Google Maps</p>
+    <p class="muted reveal car-caption">Android Auto &middot; Next Stop screen with offline Room cache &middot; 1-tap navigation in Google Maps</p>
   </div>
 </section>
 
